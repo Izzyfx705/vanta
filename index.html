@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VANTA | from the unseen void</title>
+    <meta name="description" content="Premium streetwear brand from the unseen void.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="noise-overlay"></div>
+    
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="#" class="logo">
+                <img src="images/logo.png" alt="VANTA Logo" class="logo-img">
+            </a>
+            <div class="nav-links">
+                <a href="#shop" class="nav-link">Shop</a>
+                <a href="#about" class="nav-link">About</a>
+                <a href="#contact" class="nav-link">Contact</a>
+                <a href="#" class="nav-link cart-icon-link" id="cart-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+                    <span class="cart-badge" id="cart-badge">0</span>
+                </a>
+            </div>
+            <button class="mobile-menu-btn">
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <div class="mobile-nav">
+        <a href="#shop" class="mobile-nav-link">Shop</a>
+        <a href="#about" class="mobile-nav-link">About</a>
+        <a href="#contact" class="mobile-nav-link">Contact</a>
+        <a href="#" class="mobile-nav-link cart-icon-link-mobile" id="cart-icon-mobile">Cart (<span id="cart-badge-mobile">0</span>)</a>
+    </div>
+
+    <main>
+        <section id="hero" class="hero">
+            <div class="hero-image-container">
+                <img src="images/hero.png" alt="Vanta Streetwear Model" class="hero-image">
+                <div class="hero-gradient"></div>
+            </div>
+            <div class="hero-content">
+                <h1 class="hero-title reveal-text">VANTA</h1>
+                <p class="hero-tagline reveal-text delay-1">from the unseen void</p>
+                <a href="#shop" class="cta-button reveal-fade delay-2">Explore the Void</a>
+            </div>
+        </section>
+
+        <section id="shop" class="shop section-padding">
+            <div class="container">
+                <h2 class="section-title">Latest Drops</h2>
+                <div class="product-grid" id="product-grid">
+                    <!-- Products will be injected here dynamically -->
+                </div>
+            </div>
+        </section>
+
+        <section id="about" class="about section-padding">
+            <div class="container">
+                <div class="about-grid">
+                    <div class="about-text">
+                        <h2 class="section-title">The Void</h2>
+                        <p>VANTA is born from the absence of light. We design for those who move through the city unseen, finding comfort in the shadows.</p>
+                        <p>Our garments are engineered with premium materials, fusing utilitarian function with a minimalist, dark aesthetic. Every piece is a reflection of the void—infinite, mysterious, and powerful.</p>
+                    </div>
+                    <div class="about-visual">
+                        <div class="abstract-shape"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact" class="contact section-padding">
+            <div class="container">
+                <div class="contact-wrapper">
+                    <h2 class="section-title">Enter the Void</h2>
+                    <p class="contact-sub">Join our transmission list for early access to drops.</p>
+                    <form class="contact-form">
+                        <div class="input-group">
+                            <input type="email" placeholder="YOUR EMAIL" required>
+                            <button type="submit" class="submit-btn">Subscribe</button>
+                        </div>
+                    </form>
+                    <div class="social-links">
+                        <a href="#">Instagram</a>
+                        <a href="#">Twitter</a>
+                        <a href="#">Discord</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <img src="images/logo.png" alt="VANTA" class="footer-logo">
+                    <p>&copy; 2026 VANTA. All rights reserved.</p>
+                </div>
+                <div class="footer-links">
+                    <a href="#">Terms</a>
+                    <a href="#">Privacy</a>
+                    <a href="#">Returns</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Cart Sidebar -->
+    <div class="cart-overlay" id="cart-overlay"></div>
+    <div class="cart-sidebar" id="cart-sidebar">
+        <div class="cart-header">
+            <h2>Your Cart</h2>
+            <button class="close-cart" id="close-cart">&times;</button>
+        </div>
+        <div class="cart-items" id="cart-items">
+            <!-- Items will be injected here via JS -->
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total-row">
+                <span>Total</span>
+                <span id="cart-total">$0</span>
+            </div>
+            <button class="checkout-btn" id="checkout-btn">Checkout</button>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>

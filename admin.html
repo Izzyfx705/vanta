@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VANTA Admin — Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <span class="brand-mark">V</span>
+            <span class="brand-name">VANTA</span>
+            <span class="brand-badge">Admin</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active" data-view="dashboard">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" class="nav-item" data-view="products">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                <span>Products</span>
+            </a>
+            <a href="#" class="nav-item" data-view="inventory">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                <span>Inventory</span>
+            </a>
+            <a href="#" class="nav-item" data-view="orders">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+                <span>Orders</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="index.html" class="nav-item storefront-link">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                <span>View Storefront</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-wrapper">
+        <!-- Top Bar -->
+        <header class="topbar">
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <div class="topbar-right">
+                <div class="search-box">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="text" placeholder="Search products, orders..." id="globalSearch">
+                </div>
+                <div class="admin-avatar">AD</div>
+            </div>
+        </header>
+
+        <!-- Dashboard View -->
+        <section class="view active" id="view-dashboard">
+            <div class="view-header">
+                <h1>Dashboard</h1>
+                <p class="view-sub">Welcome back. Here's what's happening with VANTA today.</p>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon blue">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-label">Revenue</span>
+                        <span class="stat-value" id="stat-revenue">$0</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon purple">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-label">Orders</span>
+                        <span class="stat-value" id="stat-orders">0</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-label">Products</span>
+                        <span class="stat-value" id="stat-products">0</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon orange">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-label">Low Stock Items</span>
+                        <span class="stat-value" id="stat-lowstock">0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="dashboard-grid">
+                <div class="card recent-orders-card">
+                    <div class="card-header"><h3>Recent Orders</h3></div>
+                    <div class="card-body" id="recent-orders-list">
+                        <p class="empty-state">No orders yet.</p>
+                    </div>
+                </div>
+                <div class="card low-stock-card">
+                    <div class="card-header"><h3>Low Stock Alerts</h3></div>
+                    <div class="card-body" id="low-stock-list">
+                        <p class="empty-state">All items stocked.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Products View -->
+        <section class="view" id="view-products">
+            <div class="view-header">
+                <h1>Products</h1>
+                <button class="btn btn-primary" id="addProductBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Add Product
+                </button>
+            </div>
+            <div class="table-controls">
+                <div class="filter-group">
+                    <select id="categoryFilter">
+                        <option value="all">All Categories</option>
+                        <option value="hoodies">Hoodies</option>
+                        <option value="tees">Tees</option>
+                        <option value="bottoms">Bottoms</option>
+                        <option value="accessories">Accessories</option>
+                        <option value="outerwear">Outerwear</option>
+                    </select>
+                    <select id="statusFilter">
+                        <option value="all">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="draft">Draft</option>
+                        <option value="archived">Archived</option>
+                    </select>
+                </div>
+            </div>
+            <div class="card">
+                <div class="table-wrap">
+                    <table class="data-table" id="productsTable">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Stock</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Inventory View -->
+        <section class="view" id="view-inventory">
+            <div class="view-header">
+                <h1>Inventory</h1>
+                <button class="btn btn-secondary" id="exportInventoryBtn">Export CSV</button>
+            </div>
+            <div class="inventory-summary" id="inventorySummary"></div>
+            <div class="card">
+                <div class="table-wrap">
+                    <table class="data-table" id="inventoryTable">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>SKU</th>
+                                <th>S</th>
+                                <th>M</th>
+                                <th>L</th>
+                                <th>XL</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Restock</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Orders View -->
+        <section class="view" id="view-orders">
+            <div class="view-header">
+                <h1>Orders</h1>
+                <button class="btn btn-secondary" id="addMockOrderBtn">+ Simulate Order</button>
+            </div>
+            <div class="card">
+                <div class="table-wrap">
+                    <table class="data-table" id="ordersTable">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Items</th>
+                                <th>Total</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Product Modal -->
+    <div class="modal-overlay" id="productModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add Product</h2>
+                <button class="modal-close" id="closeModal">&times;</button>
+            </div>
+            <form class="modal-body" id="productForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="productName">Product Name</label>
+                        <input type="text" id="productName" required placeholder="e.g. Void Overcast Hoodie">
+                    </div>
+                    <div class="form-group">
+                        <label for="productSKU">SKU</label>
+                        <input type="text" id="productSKU" required placeholder="e.g. VNT-HD-001">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="productPrice">Price ($)</label>
+                        <input type="number" id="productPrice" required min="0" step="0.01" placeholder="120.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="productCategory">Category</label>
+                        <select id="productCategory" required>
+                            <option value="hoodies">Hoodies</option>
+                            <option value="tees">Tees</option>
+                            <option value="bottoms">Bottoms</option>
+                            <option value="accessories">Accessories</option>
+                            <option value="outerwear">Outerwear</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="productImage">Product Image</label>
+                    <div style="display: flex; gap: 10px; align-items: center; margin-top: 5px;">
+                        <input type="file" id="productImage" accept="image/*" style="flex: 1; padding: 0.5rem; background: var(--bg-alt); border: 1px solid var(--border); border-radius: 6px; color: var(--text);">
+                        <img id="imagePreview" src="" alt="Preview" style="max-width: 60px; max-height: 60px; display: none; border-radius: 4px; border: 1px solid var(--border); object-fit: cover;">
+                    </div>
+                    <input type="hidden" id="productImageBase64">
+                </div>
+                <div class="form-group">
+                    <label for="productDesc">Description</label>
+                    <textarea id="productDesc" rows="3" placeholder="Product description..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Stock by Size</label>
+                    <div class="size-grid">
+                        <div class="size-input"><label>S</label><input type="number" id="stockS" min="0" value="0"></div>
+                        <div class="size-input"><label>M</label><input type="number" id="stockM" min="0" value="0"></div>
+                        <div class="size-input"><label>L</label><input type="number" id="stockL" min="0" value="0"></div>
+                        <div class="size-input"><label>XL</label><input type="number" id="stockXL" min="0" value="0"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="productStatus">Status</label>
+                    <select id="productStatus">
+                        <option value="active">Active</option>
+                        <option value="draft">Draft</option>
+                        <option value="archived">Archived</option>
+                    </select>
+                </div>
+                <input type="hidden" id="productId">
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-ghost" id="cancelModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="saveProductBtn">Save Product</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="admin.js"></script>
+</body>
+</html>
