@@ -464,6 +464,49 @@ document.getElementById('addMockOrderBtn').addEventListener('click', async () =>
     }
 });
 
+// ---- AUTHENTICATION ----
+const loginForm = document.getElementById('loginForm');
+const loginScreen = document.getElementById('login-screen');
+const appContent = document.getElementById('app-content');
+const logoutBtn = document.getElementById('logoutBtn');
+const loginError = document.getElementById('loginError');
+
+if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('adminEmail').value;
+        const password = document.getElementById('adminPassword').value;
+        const btn = document.getElementById('loginBtn');
+        
+        btn.disabled = true;
+        btn.textContent = 'Signing in...';
+        loginError.style.display = 'none';
+
+        const res = await VantaAuth.login(email, password);
+        if (res.success) {
+            startAdminSession();
+        } else {
+            loginError.textContent = res.error || 'Invalid credentials';
+            loginError.style.display = 'block';
+        }
+
+        btn.disabled = false;
+        btn.textContent = 'Sign In';
+    });
+}
+
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+        VantaAuth.logout();
+    });
+}
+
+function startAdminSession() {
+    if (loginScreen) loginScreen.classList.remove('active');
+    if (appContent) appContent.style.display = 'block';
+    initAdmin();
+}
+
 // ---- INIT ----
 // Seed defaults if Firestore is empty, then set up real-time listeners
 async function initAdmin() {
@@ -491,4 +534,9 @@ async function initAdmin() {
     showToast('Connected! Data syncs across all devices.', 'success');
 }
 
-initAdmin();
+if (VantaAuth.checkSession()) {
+    startAdminSession();
+} else {
+    if (loginScreen) loginScreen.classList.add('active');
+    if (appContent) appContent.style.display = 'none';
+}

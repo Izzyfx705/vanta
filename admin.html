@@ -10,8 +10,33 @@
     <link rel="stylesheet" href="admin.css">
 </head>
 <body>
-    <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
+    <!-- Login Screen -->
+    <div id="login-screen" class="login-overlay active">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="brand-mark" style="margin: 0 auto 1rem auto; width: 48px; height: 48px; font-size: 1.5rem;">V</div>
+                <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem;">VANTA Admin</h2>
+                <p style="color: var(--text-secondary); font-size: 0.9rem;">Sign in to access the dashboard</p>
+            </div>
+            <form id="loginForm" style="padding-top: 1rem;">
+                <div class="form-group">
+                    <label for="adminEmail">Email</label>
+                    <input type="email" id="adminEmail" required placeholder="admin@vanta.com">
+                </div>
+                <div class="form-group">
+                    <label for="adminPassword">Password</label>
+                    <input type="password" id="adminPassword" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 0.5rem;" id="loginBtn">Sign In</button>
+            </form>
+            <div id="loginError" style="color: var(--red); font-size: 0.85rem; margin-top: 1rem; text-align: center; display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="app-content" style="display: none;">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <span class="brand-mark">V</span>
             <span class="brand-name">VANTA</span>
@@ -55,6 +80,7 @@
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                     <input type="text" placeholder="Search products, orders..." id="globalSearch">
                 </div>
+                <button id="logoutBtn" class="btn btn-ghost btn-sm" style="color: var(--red);">Logout</button>
                 <div class="admin-avatar">AD</div>
             </div>
         </header>
@@ -298,6 +324,7 @@
 
     <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>
+    </div>
 
     <!-- Supabase Data Layer -->
     <script src="supabase-config.js"></script>

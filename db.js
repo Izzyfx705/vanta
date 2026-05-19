@@ -1,6 +1,45 @@
 // ===== VANTA DATA LAYER (Supabase REST API) =====
 // Shared data access module — uses plain fetch(), no SDK needed
 
+const VantaAuth = {
+    async login(email, password) {
+        try {
+            const res = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
+                method: 'POST',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error_description || data.msg || 'Login failed');
+            
+            localStorage.setItem('vanta_admin_token', data.access_token);
+            supabaseHeaders['Authorization'] = 'Bearer ' + data.access_token;
+            return { success: true };
+        } catch (e) {
+            console.error('[VantaAuth] Error logging in:', e);
+            return { success: false, error: e.message };
+        }
+    },
+    
+    logout() {
+        localStorage.removeItem('vanta_admin_token');
+        supabaseHeaders['Authorization'] = 'Bearer ' + SUPABASE_KEY;
+        window.location.reload();
+    },
+
+    checkSession() {
+        const token = localStorage.getItem('vanta_admin_token');
+        if (token) {
+            supabaseHeaders['Authorization'] = 'Bearer ' + token;
+            return true;
+        }
+        return false;
+    }
+};
+
 const VantaDB = {
     // ---- PRODUCTS ----
     async getProducts() {
