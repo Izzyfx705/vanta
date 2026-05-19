@@ -872,3 +872,6 @@ h1, h2, h3, h4 {
     from { opacity: 0; transform: translateX(20px); }
     to { opacity: 1; transform: translateX(0); }
 }
+
+ . m e t a l - l o g o   {   w i d t h :   1 0 0 % ;   m a x - w i d t h :   7 0 0 p x ;   h e i g h t :   a u t o ;   f i l t e r :   i n v e r t ( 1 ) ;   m i x - b l e n d - m o d e :   s c r e e n ;   p o i n t e r - e v e n t s :   n o n e ;   u s e r - s e l e c t :   n o n e ;   }  
+ 
