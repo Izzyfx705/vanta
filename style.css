@@ -246,7 +246,7 @@ h1, h2, h3, h4 {
 }
 
 .hero-title {
-    font-family: 'New Rocker', cursive;
+    font-family: 'UnifrakturMaguntia', cursive;
     font-size: clamp(6rem, 15vw, 12rem);
     font-weight: 400;
     line-height: 1;
