@@ -63,36 +63,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- Storefront Products ---
-    const PRODUCTS_KEY = 'vanta_products';
-    
-    function getProducts() {
-        try {
-            let products = JSON.parse(localStorage.getItem(PRODUCTS_KEY));
-            if (!localStorage.getItem('vanta_seeded') && (!products || products.length === 0)) {
-                products = [
-                    { id: 'p1', name: 'Void Overcast Hoodie', price: 120, image: 'images/product-hoodie.png', status: 'active', stock: { S: 12, M: 25, L: 18, XL: 8 } },
-                    { id: 'p2', name: 'Dark Matter Graphic Tee', price: 55, image: 'images/product-hoodie.png', status: 'active', stock: { S: 30, M: 40, L: 35, XL: 20 } },
-                    { id: 'p3', name: 'Tactical Utility Cargo', price: 145, image: 'images/product-hoodie.png', status: 'active', stock: { S: 5, M: 10, L: 8, XL: 3 } },
-                    { id: 'p4', name: 'Singularity Cap', price: 40, image: 'images/product-hoodie.png', status: 'active', stock: { S: 0, M: 0, L: 50, XL: 0 } }
-                ];
-                localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
-                localStorage.setItem('vanta_seeded', 'true');
-            } else if (!products) {
-                products = [];
-            }
-            return products.filter(p => p.status === 'active');
-        } catch {
-            return [];
-        }
-    }
-
-    window.getProducts = getProducts; // Export to be usable by update logic
+    // --- Storefront Products (Firebase powered) ---
+    let liveProducts = []; // Updated by real-time listener
 
     function renderStoreProducts() {
         const grid = document.getElementById('product-grid');
         if (!grid) return;
-        const products = getProducts();
+        const products = liveProducts.filter(p => p.status === 'active');
         
         if (products.length === 0) {
             grid.innerHTML = '<p style="color:var(--text-muted); grid-column: 1/-1; text-align: center;">No products available right now.</p>';
@@ -101,8 +78,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         grid.innerHTML = products.map(p => {
             const stock = p.stock || { S: 0, M: 0, L: 0, XL: 0 };
-            const totalStock = stock.S + stock.M + stock.L + stock.XL;
-            const isOut = totalStock === 0;
+            const ts = (stock.S || 0) + (stock.M || 0) + (stock.L || 0) + (stock.XL || 0);
+            const isOut = ts === 0;
 
             let sizeOptions = '';
             if (!isOut) {
@@ -137,9 +114,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }).join('');
     }
 
-    renderStoreProducts();
+    // Set up real-time listener so storefront updates live when admin adds/edits products
+    VantaDB.onProductsChange((products) => {
+        liveProducts = products;
+        renderStoreProducts();
+    });
 
-    // --- Cart System ---
+    // --- Cart System (stays in localStorage — it's per-user/session) ---
     const CART_STORAGE_KEY = 'vanta_cart';
     let cart = JSON.parse(localStorage.getItem(CART_STORAGE_KEY)) || [];
 
@@ -153,7 +134,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const cartBadge = document.getElementById('cart-badge');
     const cartBadgeMobile = document.getElementById('cart-badge-mobile');
     const checkoutBtn = document.getElementById('checkout-btn');
-    const quickAddBtns = document.querySelectorAll('.quick-add');
 
     function saveCart() {
         localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
@@ -229,13 +209,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function getProductStock(productId, size) {
+        const p = liveProducts.find(pr => pr.id === productId);
+        return p && p.stock ? (p.stock[size] || 0) : 0;
+    }
+
     function addToCart(product, size) {
         const existingItem = cart.find(item => item.id === product.id && item.size === size);
         
-        // Validate stock
-        let currentProducts = window.getProducts();
-        let prodData = currentProducts.find(p => p.id === product.id);
-        let stockAvailable = prodData && prodData.stock ? prodData.stock[size] : 0;
+        // Validate stock from live Firestore data
+        let stockAvailable = getProductStock(product.id, size);
         let currentQty = existingItem ? existingItem.quantity : 0;
         
         if (currentQty >= stockAvailable) {
@@ -266,9 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const item = cart[index];
         if (item) {
             if (change > 0) {
-                let currentProducts = window.getProducts();
-                let prodData = currentProducts.find(p => p.id === item.id);
-                let stockAvailable = prodData && prodData.stock ? prodData.stock[item.size] : 0;
+                let stockAvailable = getProductStock(item.id, item.size);
                 if (item.quantity + change > stockAvailable) {
                     showToast('Maximum stock limit reached');
                     return;
@@ -317,36 +298,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if(checkoutBtn) {
-        checkoutBtn.addEventListener('click', () => {
+        checkoutBtn.addEventListener('click', async () => {
             if(cart.length === 0) return;
             
             checkoutBtn.textContent = 'Processing...';
             checkoutBtn.disabled = true;
             checkoutBtn.style.opacity = '0.7';
             
-            setTimeout(() => {
-                // Update Inventory
-                let products = [];
-                try { products = JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || []; } catch(e) {}
-                
-                if (products.length === 0) {
-                    // Seed fallback products if missing in localstorage so we can deduct
-                    products = window.getProducts(); 
-                }
-
-                cart.forEach(cartItem => {
-                    let p = products.find(prod => prod.id === cartItem.id);
-                    if (p && p.stock) {
-                        p.stock[cartItem.size] = Math.max(0, p.stock[cartItem.size] - cartItem.quantity);
+            try {
+                // Deduct stock in Firestore for each cart item
+                for (const cartItem of cart) {
+                    const product = liveProducts.find(p => p.id === cartItem.id);
+                    if (product && product.stock) {
+                        const newStock = { ...product.stock };
+                        newStock[cartItem.size] = Math.max(0, (newStock[cartItem.size] || 0) - cartItem.quantity);
+                        await VantaDB.updateProductStock(product.id, newStock);
                     }
-                });
-                localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
+                }
                 
-                // Create Order
-                const ORDERS_KEY = 'vanta_orders';
-                let orders = [];
-                try { orders = JSON.parse(localStorage.getItem(ORDERS_KEY)) || []; } catch(e) {}
-                
+                // Create order in Firestore
+                const orders = await VantaDB.getOrders();
                 const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
                 const orderItems = cart.map(item => ({ name: item.name, qty: item.quantity, size: item.size }));
                 
@@ -359,21 +330,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     status: 'pending'
                 };
                 
-                orders.unshift(newOrder);
-                localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
+                await VantaDB.saveOrder(newOrder);
                 
                 // Clear Cart
                 cart = [];
                 saveCart();
                 updateCartUI();
-                renderStoreProducts(); // re-render grid to update stock UI (Sold out states)
                 toggleCart();
                 showToast('Checkout successful! Order placed.');
-                
-                checkoutBtn.textContent = 'Checkout';
-                checkoutBtn.disabled = false;
-                checkoutBtn.style.opacity = '1';
-            }, 1200);
+            } catch (err) {
+                console.error('Checkout error:', err);
+                showToast('Checkout failed. Please try again.');
+            }
+            
+            checkoutBtn.textContent = 'Checkout';
+            checkoutBtn.disabled = false;
+            checkoutBtn.style.opacity = '1';
         });
     }
 

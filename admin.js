@@ -1,50 +1,8 @@
-// ===== VANTA ADMIN DASHBOARD - JS =====
+// ===== VANTA ADMIN DASHBOARD - JS (Firebase Firestore) =====
 
-// ---- Data Layer (localStorage) ----
-const DB_KEYS = { products: 'vanta_products', orders: 'vanta_orders' };
-
-function loadData(key) {
-    try { return JSON.parse(localStorage.getItem(key)) || []; }
-    catch { return []; }
-}
-function saveData(key, data) { 
-    try {
-        localStorage.setItem(key, JSON.stringify(data)); 
-    } catch (e) {
-        console.error("Storage error:", e);
-        if (typeof showToast === 'function') {
-            showToast('Error saving data! Image might be too large.', 'error');
-        } else {
-            alert('Error saving data! Image might be too large.');
-        }
-    }
-}
-
-// Seed default products if empty
-function seedDefaults() {
-    if (localStorage.getItem('vanta_seeded')) return;
-    if (loadData(DB_KEYS.products).length > 0) {
-        localStorage.setItem('vanta_seeded', 'true');
-        return;
-    }
-    const defaults = [
-        { id: 'p1', name: 'Void Overcast Hoodie', sku: 'VNT-HD-001', price: 120, category: 'hoodies', description: 'Oversized black hoodie with embroidered logo.', stock: { S: 12, M: 25, L: 18, XL: 8 }, status: 'active' },
-        { id: 'p2', name: 'Dark Matter Graphic Tee', sku: 'VNT-TE-002', price: 55, category: 'tees', description: 'Abstract void-inspired graphic on premium cotton.', stock: { S: 30, M: 40, L: 35, XL: 20 }, status: 'active' },
-        { id: 'p3', name: 'Tactical Utility Cargo', sku: 'VNT-BT-003', price: 145, category: 'bottoms', description: 'Black cargo pants with utility pockets and adjustable straps.', stock: { S: 5, M: 10, L: 8, XL: 3 }, status: 'active' },
-        { id: 'p4', name: 'Singularity Cap', sku: 'VNT-AC-004', price: 40, category: 'accessories', description: 'Structured black cap with minimal embroidered logo.', stock: { S: 0, M: 0, L: 50, XL: 0 }, status: 'active' },
-        { id: 'p5', name: 'Eclipse Windbreaker', sku: 'VNT-OW-005', price: 185, category: 'outerwear', description: 'Techwear windbreaker with reflective details.', stock: { S: 2, M: 4, L: 3, XL: 1 }, status: 'draft' },
-        { id: 'p6', name: 'Abyss Long Sleeve', sku: 'VNT-TE-006', price: 65, category: 'tees', description: 'Heavyweight long sleeve with back print.', stock: { S: 0, M: 2, L: 1, XL: 0 }, status: 'active' }
-    ];
-    saveData(DB_KEYS.products, defaults);
-
-    const orders = [
-        { id: 'ORD-1001', customer: 'Alex Rivera', items: [{ name: 'Void Overcast Hoodie', qty: 1, size: 'M' }], total: 120, date: '2026-05-16', status: 'pending' },
-        { id: 'ORD-1002', customer: 'Jordan Kato', items: [{ name: 'Dark Matter Graphic Tee', qty: 2, size: 'L' }, { name: 'Singularity Cap', qty: 1, size: 'L' }], total: 150, date: '2026-05-15', status: 'shipped' },
-        { id: 'ORD-1003', customer: 'Sam Okonkwo', items: [{ name: 'Tactical Utility Cargo', qty: 1, size: 'M' }], total: 145, date: '2026-05-14', status: 'delivered' }
-    ];
-    saveData(DB_KEYS.orders, orders);
-    localStorage.setItem('vanta_seeded', 'true');
-}
+// ---- Cached Data (updated by real-time listeners) ----
+let cachedProducts = [];
+let cachedOrders = [];
 
 // ---- Utility ----
 function uid() { return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
@@ -95,7 +53,6 @@ navItems.forEach(item => {
 });
 
 // Mobile sidebar
-const mobileLinks = document.querySelectorAll('.mobile-nav-link');
 document.getElementById('sidebarToggle').addEventListener('click', () => {
     document.getElementById('sidebar').classList.toggle('open');
 });
@@ -109,8 +66,8 @@ document.querySelectorAll('.sidebar .nav-item').forEach(item => {
 
 // ---- DASHBOARD ----
 function renderDashboard() {
-    const products = loadData(DB_KEYS.products);
-    const orders = loadData(DB_KEYS.orders);
+    const products = cachedProducts;
+    const orders = cachedOrders;
     const revenue = orders.reduce((s, o) => s + o.total, 0);
     const lowStockItems = products.filter(p => totalStock(p.stock) <= 10 && p.status !== 'archived');
 
@@ -159,7 +116,7 @@ function renderDashboard() {
 
 // ---- PRODUCTS ----
 function renderProducts() {
-    const products = loadData(DB_KEYS.products);
+    const products = cachedProducts;
     const catFilter = document.getElementById('categoryFilter').value;
     const statusFilter = document.getElementById('statusFilter').value;
     const searchTerm = (document.getElementById('globalSearch').value || '').toLowerCase();
@@ -299,12 +256,15 @@ document.getElementById('productImage').addEventListener('change', function(e) {
     }
 });
 
-form.addEventListener('submit', (e) => {
+form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const products = loadData(DB_KEYS.products);
-    const id = document.getElementById('productId').value;
+    const saveBtn = document.getElementById('saveProductBtn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving...';
+
+    const id = document.getElementById('productId').value || uid();
     const data = {
-        id: id || uid(),
+        id: id,
         name: document.getElementById('productName').value.trim(),
         sku: document.getElementById('productSKU').value.trim(),
         price: parseFloat(document.getElementById('productPrice').value),
@@ -320,37 +280,37 @@ form.addEventListener('submit', (e) => {
         status: document.getElementById('productStatus').value
     };
 
-    if (id) {
-        const idx = products.findIndex(p => p.id === id);
-        if (idx !== -1) products[idx] = data;
-        showToast('Product updated successfully');
+    const isEdit = !!document.getElementById('productId').value;
+    const success = await VantaDB.saveProduct(data);
+    
+    if (success) {
+        showToast(isEdit ? 'Product updated successfully' : 'Product added successfully');
+        closeModal();
     } else {
-        products.push(data);
-        showToast('Product added successfully');
+        showToast('Error saving product. Try again.', 'error');
     }
 
-    saveData(DB_KEYS.products, products);
-    closeModal();
-    renderProducts();
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Save Product';
 });
 
 window.editProduct = function(id) {
-    const products = loadData(DB_KEYS.products);
-    const product = products.find(p => p.id === id);
+    const product = cachedProducts.find(p => p.id === id);
     if (product) openModal(product);
 };
 
-window.deleteProduct = function(id) {
-    let products = loadData(DB_KEYS.products);
-    products = products.filter(p => p.id !== id);
-    saveData(DB_KEYS.products, products);
-    showToast('Product deleted', 'success');
-    renderProducts();
+window.deleteProduct = async function(id) {
+    const success = await VantaDB.deleteProduct(id);
+    if (success) {
+        showToast('Product deleted', 'success');
+    } else {
+        showToast('Error deleting product', 'error');
+    }
 };
 
 // ---- INVENTORY ----
 function renderInventory() {
-    const products = loadData(DB_KEYS.products).filter(p => p.status !== 'archived');
+    const products = cachedProducts.filter(p => p.status !== 'archived');
     const totalUnits = products.reduce((s, p) => s + totalStock(p.stock), 0);
     const lowCount = products.filter(p => totalStock(p.stock) <= 10).length;
     const outCount = products.filter(p => totalStock(p.stock) === 0).length;
@@ -388,22 +348,26 @@ function renderInventory() {
     }).join('');
 }
 
-window.restockProduct = function(id) {
-    const products = loadData(DB_KEYS.products);
-    const p = products.find(pr => pr.id === id);
+window.restockProduct = async function(id) {
+    const p = cachedProducts.find(pr => pr.id === id);
     if (!p) return;
     // Simple restock: add 20 to each size
-    p.stock.S += 20;
-    p.stock.M += 20;
-    p.stock.L += 20;
-    p.stock.XL += 20;
-    saveData(DB_KEYS.products, products);
-    showToast(`Restocked ${p.name} (+20 each size)`, 'info');
-    renderInventory();
+    const newStock = {
+        S: (p.stock.S || 0) + 20,
+        M: (p.stock.M || 0) + 20,
+        L: (p.stock.L || 0) + 20,
+        XL: (p.stock.XL || 0) + 20
+    };
+    const success = await VantaDB.updateProductStock(id, newStock);
+    if (success) {
+        showToast(`Restocked ${p.name} (+20 each size)`, 'info');
+    } else {
+        showToast('Error restocking product', 'error');
+    }
 };
 
 document.getElementById('exportInventoryBtn').addEventListener('click', () => {
-    const products = loadData(DB_KEYS.products);
+    const products = cachedProducts;
     let csv = 'Name,SKU,S,M,L,XL,Total,Status\n';
     products.forEach(p => {
         const ts = totalStock(p.stock);
@@ -421,7 +385,7 @@ document.getElementById('exportInventoryBtn').addEventListener('click', () => {
 
 // ---- ORDERS ----
 function renderOrders() {
-    const orders = loadData(DB_KEYS.orders);
+    const orders = cachedOrders;
     const searchTerm = (document.getElementById('globalSearch').value || '').toLowerCase();
     
     let filtered = orders;
@@ -453,26 +417,23 @@ function renderOrders() {
     `).join('');
 }
 
-window.updateOrderStatus = function(id, status) {
-    const orders = loadData(DB_KEYS.orders);
-    const o = orders.find(or => or.id === id);
-    if (o) {
-        o.status = status;
-        saveData(DB_KEYS.orders, orders);
+window.updateOrderStatus = async function(id, status) {
+    const success = await VantaDB.updateOrderStatus(id, status);
+    if (success) {
         showToast(`Order ${id} marked as ${status}`);
-        renderOrders();
+    } else {
+        showToast('Error updating order', 'error');
     }
 };
 
 // Simulate a random order
 const mockCustomers = ['Yuki Tanaka', 'Dev Patel', 'Nia Brooks', 'Leo Martinez', 'Freya Olsen'];
-document.getElementById('addMockOrderBtn').addEventListener('click', () => {
-    let products = loadData(DB_KEYS.products).filter(p => p.status === 'active');
+document.getElementById('addMockOrderBtn').addEventListener('click', async () => {
+    let products = cachedProducts.filter(p => p.status === 'active');
     products = products.filter(p => totalStock(p.stock) > 0);
     
     if (products.length === 0) { showToast('No active products with stock available', 'error'); return; }
     
-    const orders = loadData(DB_KEYS.orders);
     const pick = products[Math.floor(Math.random() * products.length)];
     
     const availableSizes = ['S', 'M', 'L', 'XL'].filter(s => pick.stock[s] > 0);
@@ -480,28 +441,54 @@ document.getElementById('addMockOrderBtn').addEventListener('click', () => {
     const maxQty = pick.stock[size];
     const qty = Math.min(Math.floor(Math.random() * 3) + 1, maxQty);
     
-    // Deduct stock
-    const allProducts = loadData(DB_KEYS.products);
-    const prodToUpdate = allProducts.find(p => p.id === pick.id);
-    if (prodToUpdate) {
-        prodToUpdate.stock[size] -= qty;
-        saveData(DB_KEYS.products, allProducts);
-    }
+    // Deduct stock in Firestore
+    const newStock = { ...pick.stock };
+    newStock[size] -= qty;
+    await VantaDB.updateProductStock(pick.id, newStock);
     
+    const orderId = 'ORD-' + (1000 + cachedOrders.length + 1);
     const order = {
-        id: 'ORD-' + (1000 + orders.length + 1),
+        id: orderId,
         customer: mockCustomers[Math.floor(Math.random() * mockCustomers.length)],
         items: [{ name: pick.name, qty, size }],
         total: pick.price * qty,
         date: new Date().toISOString().split('T')[0],
         status: 'pending'
     };
-    orders.unshift(order);
-    saveData(DB_KEYS.orders, orders);
-    showToast(`New order ${order.id} created!`);
-    renderOrders();
+    
+    const success = await VantaDB.saveOrder(order);
+    if (success) {
+        showToast(`New order ${order.id} created!`);
+    } else {
+        showToast('Error creating order', 'error');
+    }
 });
 
 // ---- INIT ----
-seedDefaults();
-switchView('dashboard');
+// Seed defaults if Firestore is empty, then set up real-time listeners
+async function initAdmin() {
+    showToast('Connecting to database...', 'info');
+    
+    await VantaDB.seedDefaults();
+
+    // Set up real-time listeners — UI auto-updates whenever data changes on ANY device
+    VantaDB.onProductsChange((products) => {
+        cachedProducts = products;
+        const activeView = document.querySelector('.nav-item.active')?.dataset?.view;
+        if (activeView === 'dashboard') renderDashboard();
+        if (activeView === 'products') renderProducts();
+        if (activeView === 'inventory') renderInventory();
+    });
+
+    VantaDB.onOrdersChange((orders) => {
+        cachedOrders = orders;
+        const activeView = document.querySelector('.nav-item.active')?.dataset?.view;
+        if (activeView === 'dashboard') renderDashboard();
+        if (activeView === 'orders') renderOrders();
+    });
+
+    switchView('dashboard');
+    showToast('Connected! Data syncs across all devices.', 'success');
+}
+
+initAdmin();
