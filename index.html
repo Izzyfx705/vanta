@@ -134,6 +134,43 @@
         </div>
     </div>
 
+    <!-- Product Detail Modal -->
+    <div class="product-modal-overlay" id="product-modal-overlay">
+        <div class="product-modal" id="product-modal">
+            <button class="close-product-modal" id="close-product-modal">&times;</button>
+            <div class="product-modal-grid">
+                <!-- Gallery Section -->
+                <div class="product-modal-gallery">
+                    <div class="main-image-container">
+                        <button class="gallery-arrow prev" id="gallery-prev-btn">&#10216;</button>
+                        <img src="" alt="" id="product-modal-main-img">
+                        <button class="gallery-arrow next" id="gallery-next-btn">&#10217;</button>
+                    </div>
+                    <div class="product-modal-thumbnails" id="product-modal-thumbnails">
+                        <!-- Thumbnails loaded here dynamically -->
+                    </div>
+                </div>
+                <!-- Info Section -->
+                <div class="product-modal-info">
+                    <span class="product-modal-category" id="product-modal-category"></span>
+                    <h2 class="product-modal-title" id="product-modal-title"></h2>
+                    <div class="product-modal-price" id="product-modal-price"></div>
+                    <p class="product-modal-desc" id="product-modal-desc"></p>
+                    
+                    <div class="product-modal-options">
+                        <label class="options-label">Select Size</label>
+                        <div class="size-buttons-grid" id="modal-size-buttons">
+                            <!-- Size buttons loaded dynamically -->
+                        </div>
+                        <span class="stock-indicator" id="modal-stock-indicator"></span>
+                    </div>
+
+                    <button class="modal-add-to-cart-btn" id="modal-add-to-cart-btn">Add to Cart</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Checkout Modal -->
     <div class="checkout-modal-overlay" id="checkout-modal-overlay">
         <div class="checkout-modal" id="checkout-modal">
