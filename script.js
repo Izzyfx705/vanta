@@ -297,16 +297,186 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    if(checkoutBtn) {
-        checkoutBtn.addEventListener('click', async () => {
-            if(cart.length === 0) return;
+    // --- Secure Checkout Modal System ---
+    const checkoutModalOverlay = document.getElementById('checkout-modal-overlay');
+    const closeCheckoutBtn = document.getElementById('close-checkout');
+    const checkoutForm = document.getElementById('checkout-form');
+    const btnToPayment = document.getElementById('btn-to-payment');
+    const btnBackToShipping = document.getElementById('btn-back-to-shipping');
+    const stepShippingPanel = document.getElementById('step-shipping-panel');
+    const stepPaymentPanel = document.getElementById('step-payment-panel');
+    const stepShippingIndicator = document.getElementById('step-shipping-indicator');
+    const stepPaymentIndicator = document.getElementById('step-payment-indicator');
+    const checkoutSummaryItems = document.getElementById('checkout-summary-items');
+    const checkoutSubtotal = document.getElementById('checkout-subtotal');
+    const checkoutShipping = document.getElementById('checkout-shipping');
+    const checkoutTotal = document.getElementById('checkout-total');
+    const checkoutSuccessView = document.getElementById('checkout-success-view');
+    const successOrderId = document.getElementById('success-order-id');
+    const successOrderTotal = document.getElementById('success-order-total');
+    const successEmail = document.getElementById('success-email');
+    const btnCloseSuccess = document.getElementById('btn-close-success');
+    
+    // Card inputs for formatting
+    const cardNumInput = document.getElementById('checkout-card-number');
+    const cardExpiryInput = document.getElementById('checkout-card-expiry');
+    const cardCvvInput = document.getElementById('checkout-card-cvv');
+
+    // Card formatting listeners
+    if (cardNumInput) {
+        cardNumInput.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '');
+            let formatted = value.match(/.{1,4}/g);
+            e.target.value = formatted ? formatted.join(' ') : '';
+        });
+    }
+    if (cardExpiryInput) {
+        cardExpiryInput.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 2) {
+                e.target.value = value.substring(0, 2) + '/' + value.substring(2, 4);
+            } else {
+                e.target.value = value;
+            }
+        });
+    }
+    if (cardCvvInput) {
+        cardCvvInput.addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/\D/g, '');
+        });
+    }
+
+    // Step panels navigation
+    if (btnToPayment) {
+        btnToPayment.addEventListener('click', () => {
+            const email = document.getElementById('checkout-email');
+            const name = document.getElementById('checkout-name');
+            const address = document.getElementById('checkout-address');
+            const city = document.getElementById('checkout-city');
+            const zip = document.getElementById('checkout-zip');
+            const country = document.getElementById('checkout-country');
             
-            checkoutBtn.textContent = 'Processing...';
-            checkoutBtn.disabled = true;
-            checkoutBtn.style.opacity = '0.7';
+            if (!email.checkValidity()) { email.reportValidity(); return; }
+            if (!name.checkValidity()) { name.reportValidity(); return; }
+            if (!address.checkValidity()) { address.reportValidity(); return; }
+            if (!city.checkValidity()) { city.reportValidity(); return; }
+            if (!zip.checkValidity()) { zip.reportValidity(); return; }
+            if (!country.checkValidity()) { country.reportValidity(); return; }
+            
+            stepShippingPanel.classList.remove('active');
+            stepPaymentPanel.classList.add('active');
+            stepShippingIndicator.classList.remove('active');
+            stepPaymentIndicator.classList.add('active');
+            
+            document.getElementById('checkout-card-name').required = true;
+            cardNumInput.required = true;
+            cardExpiryInput.required = true;
+            cardCvvInput.required = true;
+        });
+    }
+
+    if (btnBackToShipping) {
+        btnBackToShipping.addEventListener('click', () => {
+            stepPaymentPanel.classList.remove('active');
+            stepShippingPanel.classList.add('active');
+            stepPaymentIndicator.classList.remove('active');
+            stepShippingIndicator.classList.add('active');
+            
+            document.getElementById('checkout-card-name').required = false;
+            cardNumInput.required = false;
+            cardExpiryInput.required = false;
+            cardCvvInput.required = false;
+        });
+    }
+
+    function updateCheckoutSummaryUI() {
+        if (!checkoutSummaryItems) return;
+        checkoutSummaryItems.innerHTML = cart.map(item => `
+            <div class="checkout-summary-item">
+                <img src="${item.image || 'images/logo-icon.png'}" alt="${item.name}" class="summary-item-img">
+                <div class="summary-item-info">
+                    <div class="summary-item-name">${item.name}</div>
+                    <div class="summary-item-meta">Size: ${item.size} | Qty: ${item.quantity}</div>
+                </div>
+                <div class="summary-item-price">$${item.price * item.quantity}</div>
+            </div>
+        `).join('');
+        
+        const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const shipping = subtotal > 150 ? 0 : 10;
+        const total = subtotal + shipping;
+        
+        checkoutSubtotal.textContent = `$${subtotal.toLocaleString()}`;
+        checkoutShipping.textContent = shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`;
+        checkoutTotal.textContent = `$${total.toLocaleString()}`;
+    }
+
+    function openCheckout() {
+        if (cart.length === 0) return;
+        
+        // Hide cart sidebar
+        cartSidebar.classList.remove('active');
+        cartOverlay.classList.remove('active');
+        
+        // Open checkout modal
+        checkoutModalOverlay.classList.add('active');
+        updateCheckoutSummaryUI();
+    }
+
+    function closeCheckout() {
+        checkoutModalOverlay.classList.remove('active');
+        // Reset panels to default step 1
+        stepPaymentPanel.classList.remove('active');
+        stepShippingPanel.classList.add('active');
+        stepPaymentIndicator.classList.remove('active');
+        stepShippingIndicator.classList.add('active');
+        checkoutSuccessView.classList.remove('active');
+        checkoutForm.reset();
+        
+        document.getElementById('checkout-card-name').required = false;
+        cardNumInput.required = false;
+        cardExpiryInput.required = false;
+        cardCvvInput.required = false;
+    }
+
+    if (checkoutBtn) {
+        checkoutBtn.addEventListener('click', openCheckout);
+    }
+    if (closeCheckoutBtn) {
+        closeCheckoutBtn.addEventListener('click', closeCheckout);
+    }
+    if (checkoutModalOverlay) {
+        checkoutModalOverlay.addEventListener('click', (e) => {
+            if (e.target === checkoutModalOverlay) closeCheckout();
+        });
+    }
+    if (btnCloseSuccess) {
+        btnCloseSuccess.addEventListener('click', closeCheckout);
+    }
+
+    if (checkoutForm) {
+        checkoutForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btnPlaceOrder = document.getElementById('btn-place-order');
+            btnPlaceOrder.disabled = true;
+            btnPlaceOrder.textContent = 'Processing Transaction...';
             
             try {
-                // Deduct stock in Firestore for each cart item
+                // Check stock
+                for (const cartItem of cart) {
+                    const product = liveProducts.find(p => p.id === cartItem.id);
+                    if (product && product.stock) {
+                        const availableStock = product.stock[cartItem.size] || 0;
+                        if (availableStock < cartItem.quantity) {
+                            showToast(`Error: ${product.name} in size ${cartItem.size} is out of stock.`, 'error');
+                            btnPlaceOrder.disabled = false;
+                            btnPlaceOrder.textContent = 'Complete Order';
+                            return;
+                        }
+                    }
+                }
+                
+                // Deduct stock in Supabase
                 for (const cartItem of cart) {
                     const product = liveProducts.find(p => p.id === cartItem.id);
                     if (product && product.stock) {
@@ -316,36 +486,49 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
                 
-                // Create order in Firestore
+                // Save Order
                 const orders = await VantaDB.getOrders();
-                const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                const shipping = subtotal > 150 ? 0 : 10;
+                const total = subtotal + shipping;
                 const orderItems = cart.map(item => ({ name: item.name, qty: item.quantity, size: item.size }));
                 
+                const customerName = document.getElementById('checkout-name').value.trim();
+                const customerEmail = document.getElementById('checkout-email').value.trim();
+                
+                const orderId = 'ORD-' + (1000 + orders.length + 1);
                 const newOrder = {
-                    id: 'ORD-' + (1000 + orders.length + 1),
-                    customer: 'Guest User',
+                    id: orderId,
+                    customer: `${customerName} (${customerEmail})`,
                     items: orderItems,
                     total: total,
                     date: new Date().toISOString().split('T')[0],
                     status: 'pending'
                 };
                 
-                await VantaDB.saveOrder(newOrder);
-                
-                // Clear Cart
-                cart = [];
-                saveCart();
-                updateCartUI();
-                toggleCart();
-                showToast('Checkout successful! Order placed.');
+                const success = await VantaDB.saveOrder(newOrder);
+                if (success) {
+                    successOrderId.textContent = orderId;
+                    successOrderTotal.textContent = `$${total.toLocaleString()}`;
+                    successEmail.textContent = customerEmail;
+                    
+                    checkoutSuccessView.classList.add('active');
+                    
+                    // Clear cart
+                    cart = [];
+                    saveCart();
+                    updateCartUI();
+                    showToast('Checkout successful! Order placed.');
+                } else {
+                    showToast('Order database insertion failed.', 'error');
+                }
             } catch (err) {
                 console.error('Checkout error:', err);
-                showToast('Checkout failed. Please try again.');
+                showToast('Checkout failed. Please try again.', 'error');
+            } finally {
+                btnPlaceOrder.disabled = false;
+                btnPlaceOrder.textContent = 'Complete Order';
             }
-            
-            checkoutBtn.textContent = 'Checkout';
-            checkoutBtn.disabled = false;
-            checkoutBtn.style.opacity = '1';
         });
     }
 

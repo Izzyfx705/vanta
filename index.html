@@ -134,6 +134,148 @@
         </div>
     </div>
 
+    <!-- Checkout Modal -->
+    <div class="checkout-modal-overlay" id="checkout-modal-overlay">
+        <div class="checkout-modal" id="checkout-modal">
+            <button class="close-checkout" id="close-checkout">&times;</button>
+            
+            <div class="checkout-grid">
+                <!-- Checkout Form -->
+                <div class="checkout-form-container">
+                    <h2 class="checkout-title">Secure Checkout</h2>
+                    
+                    <!-- Steps Indicator -->
+                    <div class="checkout-steps">
+                        <div class="step-indicator active" id="step-shipping-indicator">1. Shipping</div>
+                        <div class="step-indicator" id="step-payment-indicator">2. Payment</div>
+                    </div>
+
+                    <form id="checkout-form">
+                        <!-- Step 1: Shipping Details -->
+                        <div class="checkout-step-panel active" id="step-shipping-panel">
+                            <h3 class="step-heading">Shipping Information</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="checkout-email">Email Address</label>
+                                    <input type="email" id="checkout-email" required placeholder="name@domain.com">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="checkout-name">Full Name</label>
+                                    <input type="text" id="checkout-name" required placeholder="John Doe">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="checkout-address">Address</label>
+                                    <input type="text" id="checkout-address" required placeholder="123 Void St">
+                                </div>
+                            </div>
+                            <div class="form-row split">
+                                <div class="form-group">
+                                    <label for="checkout-city">City</label>
+                                    <input type="text" id="checkout-city" required placeholder="Shadow City">
+                                </div>
+                                <div class="form-group">
+                                    <label for="checkout-zip">ZIP / Postal Code</label>
+                                    <input type="text" id="checkout-zip" required placeholder="12345">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="checkout-country">Country</label>
+                                    <select id="checkout-country" required>
+                                        <option value="" disabled selected>Select your country</option>
+                                        <option value="United States">United States</option>
+                                        <option value="United Kingdom">United Kingdom</option>
+                                        <option value="Canada">Canada</option>
+                                        <option value="Germany">Germany</option>
+                                        <option value="France">France</option>
+                                        <option value="Japan">Japan</option>
+                                        <option value="Australia">Australia</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-checkout-next" id="btn-to-payment">Continue to Payment</button>
+                        </div>
+
+                        <!-- Step 2: Payment Details -->
+                        <div class="checkout-step-panel" id="step-payment-panel">
+                            <h3 class="step-heading">Credit Card Details</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="checkout-card-name">Name on Card</label>
+                                    <input type="text" id="checkout-card-name" placeholder="John Doe">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="checkout-card-number">Card Number</label>
+                                    <input type="text" id="checkout-card-number" placeholder="4111 2222 3333 4444" maxlength="19">
+                                </div>
+                            </div>
+                            <div class="form-row split">
+                                <div class="form-group">
+                                    <label for="checkout-card-expiry">Expiry Date</label>
+                                    <input type="text" id="checkout-card-expiry" placeholder="MM/YY" maxlength="5">
+                                </div>
+                                <div class="form-group">
+                                    <label for="checkout-card-cvv">CVV</label>
+                                    <input type="text" id="checkout-card-cvv" placeholder="123" maxlength="4">
+                                </div>
+                            </div>
+                            <div class="checkout-nav-buttons">
+                                <button type="button" class="btn-checkout-back" id="btn-back-to-shipping">Back</button>
+                                <button type="submit" class="btn-checkout-submit" id="btn-place-order">Complete Order</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Order Summary Sidebar -->
+                <div class="checkout-summary-container">
+                    <h3 class="summary-title">Order Summary</h3>
+                    <div class="checkout-summary-items" id="checkout-summary-items">
+                        <!-- Items will be dynamic -->
+                    </div>
+                    <div class="checkout-summary-pricing">
+                        <div class="summary-row">
+                            <span>Subtotal</span>
+                            <span id="checkout-subtotal">$0</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Shipping</span>
+                            <span id="checkout-shipping">$10.00</span>
+                        </div>
+                        <div class="summary-row total">
+                            <span>Total</span>
+                            <span id="checkout-total">$0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Success State -->
+            <div class="checkout-success-view" id="checkout-success-view">
+                <div class="success-icon">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10" stroke="var(--accent)"/>
+                        <path d="M8 12l3 3 5-5" stroke="var(--accent)" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <h2 class="success-title">Transmission Received</h2>
+                <p class="success-message">Your order has been logged into the void.</p>
+                <div class="success-details">
+                    <p>Order ID: <strong id="success-order-id">ORD-XXXX</strong></p>
+                    <p>Total Charged: <strong id="success-order-total">$0</strong></p>
+                    <p>Confirmation sent to: <span id="success-email">email@domain.com</span></p>
+                </div>
+                <button class="btn-success-close" id="btn-close-success">Return to the Void</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>
 
