@@ -11,8 +11,11 @@ create or replace function public.tr_orders_webhook()
 returns trigger as $$
 declare
   payload json;
-  webhook_url text := 'https://your-project-ref.supabase.co/functions/v1/send-order-email';
-  supabase_anon_key text := 'YOUR_SUPABASE_ANON_KEY'; -- Use your Supabase service_role or anon key for authentication
+  -- If using Vercel serverless function:
+  webhook_url text := 'https://your-vercel-project.vercel.app/api/webhook';
+  -- If using Supabase Edge Function:
+  -- webhook_url text := 'https://your-project-ref.supabase.co/functions/v1/send-order-email';
+  supabase_anon_key text := 'YOUR_SUPABASE_ANON_KEY'; -- Only needed for Supabase Edge function auth
 begin
   -- Construct the webhook payload
   payload := json_build_object(
