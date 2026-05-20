@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="product-info">
                     <h3 class="product-name">${p.name}</h3>
-                    <p class="product-price">$${p.price.toLocaleString()}</p>
+                    <p class="product-price">₦${p.price.toLocaleString()}</p>
                 </div>
             </div>
             `;
@@ -172,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <img src="${item.image}" alt="${item.name}" class="cart-item-img">
                     <div class="cart-item-details">
                         <div class="cart-item-title">${item.name} <span style="color:var(--text-muted); font-size: 0.85rem;">(${item.size})</span></div>
-                        <div class="cart-item-price">$${item.price}</div>
+                        <div class="cart-item-price">₦${item.price}</div>
                         <div class="cart-item-actions">
                             <div class="qty-controls">
                                 <button class="qty-btn minus" data-index="${index}">-</button>
@@ -187,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        cartTotalEl.textContent = '$' + total.toLocaleString();
+        cartTotalEl.textContent = '₦' + total.toLocaleString();
         
         if (count > 0) {
             cartBadge.style.display = 'flex';
@@ -398,7 +398,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="summary-item-name">${item.name}</div>
                     <div class="summary-item-meta">Size: ${item.size} | Qty: ${item.quantity}</div>
                 </div>
-                <div class="summary-item-price">$${item.price * item.quantity}</div>
+                <div class="summary-item-price">₦${item.price * item.quantity}</div>
             </div>
         `).join('');
         
@@ -406,9 +406,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const shipping = subtotal > 150 ? 0 : 10;
         const total = subtotal + shipping;
         
-        checkoutSubtotal.textContent = `$${subtotal.toLocaleString()}`;
-        checkoutShipping.textContent = shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`;
-        checkoutTotal.textContent = `$${total.toLocaleString()}`;
+        checkoutSubtotal.textContent = `₦${subtotal.toLocaleString()}`;
+        checkoutShipping.textContent = shipping === 0 ? 'FREE' : `₦${shipping.toFixed(2)}`;
+        checkoutTotal.textContent = `₦${total.toLocaleString()}`;
     }
 
     function openCheckout() {
@@ -509,7 +509,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const success = await VantaDB.saveOrder(newOrder);
                 if (success) {
                     successOrderId.textContent = orderId;
-                    successOrderTotal.textContent = `$${total.toLocaleString()}`;
+                    successOrderTotal.textContent = `₦${total.toLocaleString()}`;
                     successEmail.textContent = customerEmail;
                     
                     checkoutSuccessView.classList.add('active');

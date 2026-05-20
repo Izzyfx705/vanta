@@ -7,7 +7,7 @@ let cachedOrders = [];
 // ---- Utility ----
 function uid() { return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 function totalStock(s) { return (s.S || 0) + (s.M || 0) + (s.L || 0) + (s.XL || 0); }
-function formatMoney(v) { return '$' + Number(v).toLocaleString('en-US', { minimumFractionDigits: 0 }); }
+function formatMoney(v) { return '₦' + Number(v).toLocaleString('en-NG', { minimumFractionDigits: 0 }); }
 
 function showToast(msg, type = 'success') {
     const c = document.getElementById('toastContainer');
