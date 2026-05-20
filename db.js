@@ -67,7 +67,11 @@ const VantaDB = {
                 },
                 body: JSON.stringify(product)
             });
-            if (!res.ok) throw new Error('Failed to save product: ' + res.status);
+            if (!res.ok) {
+                const errText = await res.text();
+                console.error('[VantaDB] Save product failed:', res.status, errText);
+                throw new Error('Failed to save product: ' + res.status);
+            }
             return true;
         } catch (e) {
             console.error('[VantaDB] Error saving product:', e);

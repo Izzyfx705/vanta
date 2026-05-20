@@ -329,15 +329,16 @@ form.addEventListener('submit', async (e) => {
         price: parseFloat(document.getElementById('productPrice').value),
         category: document.getElementById('productCategory').value,
         description: document.getElementById('productDesc').value.trim(),
-        image: productImages[0] || '',            // backward compat: first image as cover
-        images: productImages,                     // full array of all images
+
         stock: {
             S: parseInt(document.getElementById('stockS').value) || 0,
             M: parseInt(document.getElementById('stockM').value) || 0,
             L: parseInt(document.getElementById('stockL').value) || 0,
             XL: parseInt(document.getElementById('stockXL').value) || 0
         },
-        status: document.getElementById('productStatus').value
+        status: document.getElementById('productStatus').value,
+        image: productImages[0] || '',
+        images: productImages,
     };
 
     const isEdit = !!document.getElementById('productId').value;
