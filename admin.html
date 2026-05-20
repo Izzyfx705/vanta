@@ -285,12 +285,14 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="productImage">Product Image</label>
-                    <div style="display: flex; gap: 10px; align-items: center; margin-top: 5px;">
-                        <input type="file" id="productImage" accept="image/*" style="flex: 1; padding: 0.5rem; background: var(--bg-alt); border: 1px solid var(--border); border-radius: 6px; color: var(--text);">
-                        <img id="imagePreview" src="" alt="Preview" style="max-width: 60px; max-height: 60px; display: none; border-radius: 4px; border: 1px solid var(--border); object-fit: cover;">
+                    <label>Product Images <span style="color: var(--text-muted); font-weight: 400; font-size: 0.8rem;">(First image = cover photo)</span></label>
+                    <div id="imageUploadZone" style="border: 2px dashed var(--border); border-radius: 8px; padding: 1.5rem; text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; margin-top: 5px; background: var(--bg-alt);">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: var(--text-muted); margin-bottom: 0.5rem;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0;">Click or drag images here to upload</p>
+                        <input type="file" id="productImageFiles" accept="image/*" multiple style="display: none;">
                     </div>
-                    <input type="hidden" id="productImageBase64">
+                    <div id="imagePreviews" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;"></div>
+                    <input type="hidden" id="productImagesData">
                 </div>
                 <div class="form-group">
                     <label for="productDesc">Description</label>

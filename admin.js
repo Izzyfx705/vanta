@@ -164,11 +164,11 @@ document.getElementById('statusFilter').addEventListener('change', renderProduct
 // ---- PRODUCT MODAL ----
 const modal = document.getElementById('productModal');
 const form = document.getElementById('productForm');
-
+// ---- Multi-image state ----
+let productImages = [];
 function openModal(product = null) {
     form.reset();
-    const imagePreview = document.getElementById('imagePreview');
-    const imageBase64 = document.getElementById('productImageBase64');
+    productImages = [];
     if (product) {
         document.getElementById('modalTitle').textContent = 'Edit Product';
         document.getElementById('productId').value = product.id;
@@ -182,22 +182,17 @@ function openModal(product = null) {
         document.getElementById('stockL').value = product.stock.L || 0;
         document.getElementById('stockXL').value = product.stock.XL || 0;
         document.getElementById('productStatus').value = product.status;
-        if (product.image) {
-            imagePreview.src = product.image;
-            imagePreview.style.display = 'block';
-            imageBase64.value = product.image;
-        } else {
-            imagePreview.src = '';
-            imagePreview.style.display = 'none';
-            imageBase64.value = '';
+        // Load existing images (support both old single `image` and new `images` array)
+        if (product.images && product.images.length > 0) {
+            productImages = [...product.images];
+        } else if (product.image) {
+            productImages = [product.image];
         }
     } else {
         document.getElementById('modalTitle').textContent = 'Add Product';
         document.getElementById('productId').value = '';
-        imagePreview.src = '';
-        imagePreview.style.display = 'none';
-        imageBase64.value = '';
     }
+    renderImagePreviews();
     modal.classList.add('active');
 }
 
@@ -208,9 +203,40 @@ document.getElementById('closeModal').addEventListener('click', closeModal);
 document.getElementById('cancelModal').addEventListener('click', closeModal);
 modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
-document.getElementById('productImage').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
+// ---- Multi-image upload system ----
+const uploadZone = document.getElementById('imageUploadZone');
+const fileInput = document.getElementById('productImageFiles');
+
+// Click to upload
+uploadZone.addEventListener('click', () => fileInput.click());
+
+// Drag and drop
+uploadZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadZone.style.borderColor = 'var(--blue)';
+    uploadZone.style.background = 'rgba(56, 139, 253, 0.05)';
+});
+uploadZone.addEventListener('dragleave', () => {
+    uploadZone.style.borderColor = 'var(--border)';
+    uploadZone.style.background = 'var(--bg-alt)';
+});
+uploadZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadZone.style.borderColor = 'var(--border)';
+    uploadZone.style.background = 'var(--bg-alt)';
+    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+    if (files.length) processImageFiles(files);
+});
+
+// File input change
+fileInput.addEventListener('change', (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length) processImageFiles(files);
+    fileInput.value = ''; // reset so the same files can be re-selected
+});
+
+function processImageFiles(files) {
+    files.forEach(file => {
         const reader = new FileReader();
         reader.onload = function(event) {
             const img = new Image();
@@ -220,41 +246,74 @@ document.getElementById('productImage').addEventListener('change', function(e) {
                 const MAX_HEIGHT = 800;
                 let width = img.width;
                 let height = img.height;
-                
+
                 if (width > height) {
-                    if (width > MAX_WIDTH) {
-                        height *= MAX_WIDTH / width;
-                        width = MAX_WIDTH;
-                    }
+                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
                 } else {
-                    if (height > MAX_HEIGHT) {
-                        width *= MAX_HEIGHT / height;
-                        height = MAX_HEIGHT;
-                    }
+                    if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
                 }
                 canvas.width = width;
                 canvas.height = height;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
-                
-                // Compress as JPEG to save huge amounts of space
+
                 const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-                document.getElementById('productImageBase64').value = dataUrl;
-                
-                const imgPreview = document.getElementById('imagePreview');
-                imgPreview.src = dataUrl;
-                imgPreview.style.display = 'block';
+                productImages.push(dataUrl);
+                renderImagePreviews();
             };
             img.src = event.target.result;
         };
         reader.readAsDataURL(file);
-    } else {
-        document.getElementById('productImageBase64').value = '';
-        const imgPreview = document.getElementById('imagePreview');
-        imgPreview.src = '';
-        imgPreview.style.display = 'none';
+    });
+}
+
+function renderImagePreviews() {
+    const container = document.getElementById('imagePreviews');
+    if (productImages.length === 0) {
+        container.innerHTML = '';
+        return;
     }
-});
+    container.innerHTML = productImages.map((src, idx) => `
+        <div class="img-thumb-wrap" draggable="true" data-idx="${idx}" style="position: relative; width: 80px; height: 80px; border-radius: 6px; overflow: hidden; border: 2px solid ${idx === 0 ? 'var(--blue)' : 'var(--border)'}; cursor: grab; flex-shrink: 0; transition: border-color 0.2s;">
+            <img src="${src}" alt="Image ${idx + 1}" style="width: 100%; height: 100%; object-fit: cover;">
+            ${idx === 0 ? '<span style="position: absolute; top: 2px; left: 2px; background: var(--blue); color: #fff; font-size: 0.6rem; padding: 1px 5px; border-radius: 3px; font-weight: 600;">COVER</span>' : ''}
+            <button type="button" onclick="removeProductImage(${idx})" style="position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,0.7); color: #fff; border: none; width: 20px; height: 20px; border-radius: 50%; cursor: pointer; font-size: 12px; line-height: 20px; text-align: center; padding: 0;">&times;</button>
+        </div>
+    `).join('');
+
+    // Drag-to-reorder
+    const thumbs = container.querySelectorAll('.img-thumb-wrap');
+    thumbs.forEach(thumb => {
+        thumb.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('text/plain', thumb.dataset.idx);
+            thumb.style.opacity = '0.4';
+        });
+        thumb.addEventListener('dragend', () => { thumb.style.opacity = '1'; });
+        thumb.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            thumb.style.borderColor = 'var(--blue)';
+        });
+        thumb.addEventListener('dragleave', () => {
+            const idx = parseInt(thumb.dataset.idx);
+            thumb.style.borderColor = idx === 0 ? 'var(--blue)' : 'var(--border)';
+        });
+        thumb.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const fromIdx = parseInt(e.dataTransfer.getData('text/plain'));
+            const toIdx = parseInt(thumb.dataset.idx);
+            if (fromIdx !== toIdx) {
+                const [moved] = productImages.splice(fromIdx, 1);
+                productImages.splice(toIdx, 0, moved);
+                renderImagePreviews();
+            }
+        });
+    });
+}
+
+window.removeProductImage = function(idx) {
+    productImages.splice(idx, 1);
+    renderImagePreviews();
+};
 
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -270,7 +329,8 @@ form.addEventListener('submit', async (e) => {
         price: parseFloat(document.getElementById('productPrice').value),
         category: document.getElementById('productCategory').value,
         description: document.getElementById('productDesc').value.trim(),
-        image: document.getElementById('productImageBase64').value,
+        image: productImages[0] || '',            // backward compat: first image as cover
+        images: productImages,                     // full array of all images
         stock: {
             S: parseInt(document.getElementById('stockS').value) || 0,
             M: parseInt(document.getElementById('stockM').value) || 0,
