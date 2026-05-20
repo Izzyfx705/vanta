@@ -246,7 +246,7 @@ h1, h2, h3, h4 {
 }
 
 .hero-title {
-    font-family: 'UnifrakturMaguntia', cursive;
+    font-family: 'New Rocker', cursive; /* Alternate spiky fonts imported: 'Metal Mania', 'MedievalSharp', or 'UnifrakturMaguntia' */
     font-size: clamp(6rem, 15vw, 12rem);
     font-weight: 400;
     line-height: 1;
@@ -254,16 +254,6 @@ h1, h2, h3, h4 {
     letter-spacing: 0.05em;
     text-transform: uppercase;
     text-shadow: 0 10px 30px rgba(0,0,0,0.5);
-}
-
-.hero-logo-gothic {
-    height: clamp(80px, 15vw, 160px);
-    width: auto;
-    filter: invert(1) contrast(200%) brightness(120%);
-    mix-blend-mode: screen;
-    opacity: 0.95;
-    display: block;
-    margin: 0 auto 0.5rem auto;
 }
 
 .hero-tagline {
