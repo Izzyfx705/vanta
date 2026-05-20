@@ -62,7 +62,8 @@ const VantaDB = {
                 method: 'POST',
                 headers: {
                     ...supabaseHeaders,
-                    'Prefer': 'resolution=merge-duplicates,return=representation'
+                    'Prefer': 'resolution=merge-duplicates,return=representation',
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(product)
             });
