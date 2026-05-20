@@ -139,6 +139,8 @@ function getVantaEmailWrapper(title: string, contentHtml: string) {
 }
 
 async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
+  const senderEmail = Deno.env.get('SENDER_EMAIL') || 'onboarding@resend.dev';
+
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
@@ -146,7 +148,7 @@ async function sendEmail({ to, subject, html }: { to: string; subject: string; h
       'Authorization': `Bearer ${RESEND_API_KEY}`
     },
     body: JSON.stringify({
-      from: 'VANTA <orders@vanta.com>', // Note: Needs domain verification in Resend production
+      from: `VANTA <${senderEmail}>`,
       to: [to],
       subject,
       html

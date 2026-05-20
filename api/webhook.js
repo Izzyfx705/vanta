@@ -115,6 +115,8 @@ function formatItemsTable(items) {
 
 // Send HTTP POST request to Resend API
 async function sendResendEmail(to, subject, html, apiKey) {
+  const senderEmail = process.env.SENDER_EMAIL || 'onboarding@resend.dev';
+
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
@@ -122,7 +124,7 @@ async function sendResendEmail(to, subject, html, apiKey) {
       'Authorization': `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      from: 'VANTA <orders@vanta.com>', // Set your verified domain email here in production
+      from: `VANTA <${senderEmail}>`,
       to: [to],
       subject,
       html
