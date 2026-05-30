@@ -737,11 +737,42 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- Shipping Policy Modal ---
+    const shippingPolicyLink = document.getElementById('shipping-policy-link');
+    const shippingModalOverlay = document.getElementById('shipping-modal-overlay');
+    const closeShippingBtn = document.getElementById('close-shipping');
+
+    function closeShippingModal() {
+        if (shippingModalOverlay) {
+            shippingModalOverlay.classList.remove('active');
+        }
+    }
+
+    if (shippingPolicyLink) {
+        shippingPolicyLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (shippingModalOverlay) shippingModalOverlay.classList.add('active');
+        });
+    }
+
+    if (closeShippingBtn) {
+        closeShippingBtn.addEventListener('click', closeShippingModal);
+    }
+
+    if (shippingModalOverlay) {
+        shippingModalOverlay.addEventListener('click', (e) => {
+            if (e.target === shippingModalOverlay) {
+                closeShippingModal();
+            }
+        });
+    }
+
     // Escape Key to close all modals
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             closeProductModal();
             closeRefundModal();
+            closeShippingModal();
             // Also close checkout modal if open
             const checkoutModalOverlay = document.getElementById('checkout-modal-overlay');
             if (checkoutModalOverlay) checkoutModalOverlay.classList.remove('active');
