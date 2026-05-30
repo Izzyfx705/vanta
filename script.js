@@ -707,10 +707,41 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // --- Refund Policy Modal ---
+    const refundPolicyLink = document.getElementById('refund-policy-link');
+    const refundModalOverlay = document.getElementById('refund-modal-overlay');
+    const closeRefundBtn = document.getElementById('close-refund');
+
+    function closeRefundModal() {
+        if (refundModalOverlay) {
+            refundModalOverlay.classList.remove('active');
+        }
+    }
+
+    if (refundPolicyLink) {
+        refundPolicyLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (refundModalOverlay) refundModalOverlay.classList.add('active');
+        });
+    }
+
+    if (closeRefundBtn) {
+        closeRefundBtn.addEventListener('click', closeRefundModal);
+    }
+
+    if (refundModalOverlay) {
+        refundModalOverlay.addEventListener('click', (e) => {
+            if (e.target === refundModalOverlay) {
+                closeRefundModal();
+            }
+        });
+    }
+
     // Escape Key to close all modals
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             closeProductModal();
+            closeRefundModal();
             // Also close checkout modal if open
             const checkoutModalOverlay = document.getElementById('checkout-modal-overlay');
             if (checkoutModalOverlay) checkoutModalOverlay.classList.remove('active');

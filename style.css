@@ -1782,6 +1782,138 @@ h1, h2, h3, h4 {
     cursor: not-allowed;
 }
 
+/* ===== REFUND MODAL ===== */
+.refund-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(5, 5, 5, 0.9);
+    backdrop-filter: blur(12px);
+    z-index: 1600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-smooth);
+}
+
+.refund-modal-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.refund-modal {
+    background: var(--dark-grey);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    width: 750px;
+    max-width: 90vw;
+    height: 80vh;
+    max-height: 700px;
+    border-radius: 4px;
+    position: relative;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9);
+    display: flex;
+    flex-direction: column;
+    transition: transform var(--transition-smooth);
+    transform: translateY(20px);
+}
+
+.refund-modal-overlay.active .refund-modal {
+    transform: translateY(0);
+}
+
+.close-refund {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    background: none;
+    border: none;
+    color: var(--light-grey);
+    font-size: 2rem;
+    cursor: pointer;
+    line-height: 1;
+    z-index: 10;
+    transition: color var(--transition-fast);
+}
+
+.close-refund:hover {
+    color: var(--pure-white);
+}
+
+.refund-modal-content {
+    padding: 3rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.refund-modal-content h2 {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    color: var(--pure-white);
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.1em;
+}
+
+.refund-modal-content .last-updated {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.8rem;
+    color: var(--light-grey);
+    margin-bottom: 2rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.refund-modal-content p {
+    font-family: var(--font-primary);
+    font-size: 0.95rem;
+    color: var(--light-grey);
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
+}
+
+.refund-modal-content h3 {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    color: var(--pure-white);
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 0.3rem;
+}
+
+.refund-modal-content ul, .refund-modal-content ol {
+    margin-bottom: 1.5rem;
+    padding-left: 1.2rem;
+}
+
+.refund-modal-content li {
+    font-family: var(--font-primary);
+    font-size: 0.95rem;
+    color: var(--light-grey);
+    line-height: 1.7;
+    margin-bottom: 0.6rem;
+}
+
+.refund-modal-content li ul {
+    margin-top: 0.5rem;
+    margin-bottom: 0;
+    list-style-type: circle;
+}
+
+.refund-modal-content a {
+    color: var(--pure-white);
+    text-decoration: underline;
+    transition: color var(--transition-fast);
+}
+
+.refund-modal-content a:hover {
+    color: var(--light-grey);
+}
+
 /* Responsiveness for Product Modal & Checkout */
 @media (max-width: 768px) {
     /* Full-screen checkout modal on mobile for best experience */
@@ -1904,6 +2036,35 @@ h1, h2, h3, h4 {
     }
 
     .close-product-modal {
+        top: 1rem;
+        right: 1rem;
+        font-size: 1.8rem;
+        z-index: 100;
+        background: rgba(0, 0, 0, 0.4);
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(4px);
+    }
+
+    /* Refund Modal mobile responsiveness */
+    .refund-modal {
+        height: 100%;
+        max-height: 100%;
+        width: 100%;
+        max-width: 100%;
+        border-radius: 0;
+        border: none;
+    }
+
+    .refund-modal-content {
+        padding: 2rem 1.5rem 4rem 1.5rem;
+    }
+
+    .close-refund {
         top: 1rem;
         right: 1rem;
         font-size: 1.8rem;
