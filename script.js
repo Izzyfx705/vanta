@@ -333,35 +333,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const successEmail = document.getElementById('success-email');
     const btnCloseSuccess = document.getElementById('btn-close-success');
     
-    // Card inputs for formatting
-    const cardNumInput = document.getElementById('checkout-card-number');
-    const cardExpiryInput = document.getElementById('checkout-card-expiry');
-    const cardCvvInput = document.getElementById('checkout-card-cvv');
-
-    // Card formatting listeners
-    if (cardNumInput) {
-        cardNumInput.addEventListener('input', (e) => {
-            let value = e.target.value.replace(/\D/g, '');
-            let formatted = value.match(/.{1,4}/g);
-            e.target.value = formatted ? formatted.join(' ') : '';
-        });
-    }
-    if (cardExpiryInput) {
-        cardExpiryInput.addEventListener('input', (e) => {
-            let value = e.target.value.replace(/\D/g, '');
-            if (value.length > 2) {
-                e.target.value = value.substring(0, 2) + '/' + value.substring(2, 4);
-            } else {
-                e.target.value = value;
-            }
-        });
-    }
-    if (cardCvvInput) {
-        cardCvvInput.addEventListener('input', (e) => {
-            e.target.value = e.target.value.replace(/\D/g, '');
-        });
-    }
-
     // Step panels navigation
     if (btnToPayment) {
         btnToPayment.addEventListener('click', () => {
@@ -379,15 +350,29 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!zip.checkValidity()) { zip.reportValidity(); return; }
             if (!country.checkValidity()) { country.reportValidity(); return; }
             
+            // Populate Step 2 review details
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const shipping = subtotal > 150 ? 0 : 10;
+            const total = subtotal + shipping;
+
+            const summaryCustomer = document.getElementById('payment-summary-customer');
+            const summaryAddress = document.getElementById('payment-summary-address');
+            const summaryTotal = document.getElementById('payment-summary-total');
+
+            if (summaryCustomer) {
+                summaryCustomer.textContent = `${name.value.trim()} (${email.value.trim()})`;
+            }
+            if (summaryAddress) {
+                summaryAddress.textContent = `${address.value.trim()}, ${city.value.trim()} ${zip.value.trim()}, ${country.value}`;
+            }
+            if (summaryTotal) {
+                summaryTotal.textContent = `₦${total.toLocaleString()}`;
+            }
+
             stepShippingPanel.classList.remove('active');
             stepPaymentPanel.classList.add('active');
             stepShippingIndicator.classList.remove('active');
             stepPaymentIndicator.classList.add('active');
-            
-            document.getElementById('checkout-card-name').required = true;
-            cardNumInput.required = true;
-            cardExpiryInput.required = true;
-            cardCvvInput.required = true;
         });
     }
 
@@ -397,11 +382,6 @@ document.addEventListener('DOMContentLoaded', () => {
             stepShippingPanel.classList.add('active');
             stepPaymentIndicator.classList.remove('active');
             stepShippingIndicator.classList.add('active');
-            
-            document.getElementById('checkout-card-name').required = false;
-            cardNumInput.required = false;
-            cardExpiryInput.required = false;
-            cardCvvInput.required = false;
         });
     }
 
@@ -448,11 +428,6 @@ document.addEventListener('DOMContentLoaded', () => {
         stepShippingIndicator.classList.add('active');
         checkoutSuccessView.classList.remove('active');
         checkoutForm.reset();
-        
-        document.getElementById('checkout-card-name').required = false;
-        cardNumInput.required = false;
-        cardExpiryInput.required = false;
-        cardCvvInput.required = false;
     }
 
     if (checkoutBtn) {
@@ -475,10 +450,10 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const btnPlaceOrder = document.getElementById('btn-place-order');
             btnPlaceOrder.disabled = true;
-            btnPlaceOrder.textContent = 'Processing Transaction...';
+            btnPlaceOrder.textContent = 'Initializing Paystack...';
             
             try {
-                // Check stock
+                // Check stock before charging the user
                 for (const cartItem of cart) {
                     const product = liveProducts.find(p => p.id === cartItem.id);
                     if (product && product.stock) {
@@ -486,23 +461,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (availableStock < cartItem.quantity) {
                             showToast(`Error: ${product.name} in size ${cartItem.size} is out of stock.`, 'error');
                             btnPlaceOrder.disabled = false;
-                            btnPlaceOrder.textContent = 'Complete Order';
+                            btnPlaceOrder.textContent = 'Pay with Paystack';
                             return;
                         }
                     }
                 }
                 
-                // Deduct stock in Supabase
-                for (const cartItem of cart) {
-                    const product = liveProducts.find(p => p.id === cartItem.id);
-                    if (product && product.stock) {
-                        const newStock = { ...product.stock };
-                        newStock[cartItem.size] = Math.max(0, (newStock[cartItem.size] || 0) - cartItem.quantity);
-                        await VantaDB.updateProductStock(product.id, newStock);
-                    }
-                }
-                
-                // Save Order
                 const orders = await VantaDB.getOrders();
                 const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
                 const shipping = subtotal > 150 ? 0 : 10;
@@ -511,39 +475,83 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const customerName = document.getElementById('checkout-name').value.trim();
                 const customerEmail = document.getElementById('checkout-email').value.trim();
-                
                 const orderId = 'ORD-' + (1000 + orders.length + 1);
-                const newOrder = {
-                    id: orderId,
-                    customer: `${customerName} (${customerEmail})`,
-                    items: orderItems,
-                    total: total,
-                    date: new Date().toISOString().split('T')[0],
-                    status: 'pending'
-                };
-                
-                const success = await VantaDB.saveOrder(newOrder);
-                if (success) {
-                    successOrderId.textContent = orderId;
-                    successOrderTotal.textContent = `₦${total.toLocaleString()}`;
-                    successEmail.textContent = customerEmail;
-                    
-                    checkoutSuccessView.classList.add('active');
-                    
-                    // Clear cart
-                    cart = [];
-                    saveCart();
-                    updateCartUI();
-                    showToast('Checkout successful! Order placed.');
-                } else {
-                    showToast('Order database insertion failed.', 'error');
+
+                // Initialize Paystack Inline Pop-up
+                if (typeof PaystackPop === 'undefined') {
+                    showToast('Payment gateway failed to load. Please refresh the page.', 'error');
+                    btnPlaceOrder.disabled = false;
+                    btnPlaceOrder.textContent = 'Pay with Paystack';
+                    return;
                 }
+
+                const paystackHandler = PaystackPop.setup({
+                    key: PAYMENT_CONFIG.publicKey,
+                    email: customerEmail,
+                    amount: total * 100, // Paystack expects amount in kobo (kobo = Naira * 100)
+                    currency: 'NGN',
+                    ref: `${orderId}-${Date.now()}`,
+                    callback: async (response) => {
+                        btnPlaceOrder.textContent = 'Recording Order...';
+                        try {
+                            // Deduct stock in Supabase
+                            for (const cartItem of cart) {
+                                const product = liveProducts.find(p => p.id === cartItem.id);
+                                if (product && product.stock) {
+                                    const newStock = { ...product.stock };
+                                    newStock[cartItem.size] = Math.max(0, (newStock[cartItem.size] || 0) - cartItem.quantity);
+                                    await VantaDB.updateProductStock(product.id, newStock);
+                                }
+                            }
+                            
+                            // Save Order to Supabase, embedding Paystack payment ref inside customer field securely
+                            const newOrder = {
+                                id: orderId,
+                                customer: `${customerName} [Paystack: ${response.reference}] (${customerEmail})`,
+                                items: orderItems,
+                                total: total,
+                                date: new Date().toISOString().split('T')[0],
+                                status: 'pending'
+                            };
+                            
+                            const success = await VantaDB.saveOrder(newOrder);
+                            if (success) {
+                                successOrderId.textContent = orderId;
+                                successOrderTotal.textContent = `₦${total.toLocaleString()}`;
+                                successEmail.textContent = customerEmail;
+                                
+                                checkoutSuccessView.classList.add('active');
+                                
+                                // Clear cart
+                                cart = [];
+                                saveCart();
+                                updateCartUI();
+                                showToast('Transaction successful! Order logged.');
+                            } else {
+                                showToast('Failed to save order to database. Reference: ' + response.reference, 'error');
+                            }
+                        } catch (err) {
+                            console.error('Checkout recording error:', err);
+                            showToast('Failed to complete checkout record. Reference: ' + response.reference, 'error');
+                        } finally {
+                            btnPlaceOrder.disabled = false;
+                            btnPlaceOrder.textContent = 'Pay with Paystack';
+                        }
+                    },
+                    onClose: () => {
+                        showToast('Transaction cancelled by user.', 'error');
+                        btnPlaceOrder.disabled = false;
+                        btnPlaceOrder.textContent = 'Pay with Paystack';
+                    }
+                });
+
+                paystackHandler.openIframe();
+
             } catch (err) {
-                console.error('Checkout error:', err);
-                showToast('Checkout failed. Please try again.', 'error');
-            } finally {
+                console.error('Checkout initializing error:', err);
+                showToast('Checkout initialization failed.', 'error');
                 btnPlaceOrder.disabled = false;
-                btnPlaceOrder.textContent = 'Complete Order';
+                btnPlaceOrder.textContent = 'Pay with Paystack';
             }
         });
     }

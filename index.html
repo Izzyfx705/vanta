@@ -241,32 +241,25 @@
 
                         <!-- Step 2: Payment Details -->
                         <div class="checkout-step-panel" id="step-payment-panel">
-                            <h3 class="step-heading">Credit Card Details</h3>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="checkout-card-name">Name on Card</label>
-                                    <input type="text" id="checkout-card-name" placeholder="John Doe">
+                            <h3 class="step-heading">Secure Checkout</h3>
+                            <div class="payment-summary-box">
+                                <div class="summary-line">
+                                    <span class="label">Customer</span>
+                                    <span class="value" id="payment-summary-customer">Loading...</span>
+                                </div>
+                                <div class="summary-line">
+                                    <span class="label">Delivery Address</span>
+                                    <span class="value" id="payment-summary-address">Loading...</span>
+                                </div>
+                                <div class="summary-line total-highlight">
+                                    <span class="label">Total Amount</span>
+                                    <span class="value" id="payment-summary-total">₦0</span>
                                 </div>
                             </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="checkout-card-number">Card Number</label>
-                                    <input type="text" id="checkout-card-number" placeholder="4111 2222 3333 4444" maxlength="19">
-                                </div>
-                            </div>
-                            <div class="form-row split">
-                                <div class="form-group">
-                                    <label for="checkout-card-expiry">Expiry Date</label>
-                                    <input type="text" id="checkout-card-expiry" placeholder="MM/YY" maxlength="5">
-                                </div>
-                                <div class="form-group">
-                                    <label for="checkout-card-cvv">CVV</label>
-                                    <input type="text" id="checkout-card-cvv" placeholder="123" maxlength="4">
-                                </div>
-                            </div>
+                            <p class="payment-info-text">Payments are securely processed via Paystack. You can pay with Card, Bank Transfer, USSD, or Bank App.</p>
                             <div class="checkout-nav-buttons">
                                 <button type="button" class="btn-checkout-back" id="btn-back-to-shipping">Back</button>
-                                <button type="submit" class="btn-checkout-submit" id="btn-place-order">Complete Order</button>
+                                <button type="submit" class="btn-checkout-submit" id="btn-place-order">Pay with Paystack</button>
                             </div>
                         </div>
                     </form>
@@ -435,6 +428,8 @@
 
     <!-- Supabase Data Layer -->
     <script src="supabase-config.js"></script>
+    <script src="payment-config.js"></script>
+    <script src="https://js.paystack.co/v1/inline.js"></script>
     <script src="db.js"></script>
     <script src="script.js"></script>
 </body>
