@@ -485,8 +485,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
+                const paystackKey = (typeof PAYMENT_CONFIG !== 'undefined' && PAYMENT_CONFIG.publicKey) || 'pk_live_1edd26841ca8b73279796986a1063e2c4ef8f43b';
                 const paystackHandler = PaystackPop.setup({
-                    key: PAYMENT_CONFIG.publicKey,
+                    key: paystackKey,
                     email: customerEmail,
                     amount: total * 100, // Paystack expects amount in kobo (kobo = Naira * 100)
                     currency: 'NGN',
