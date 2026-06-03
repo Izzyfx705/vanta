@@ -1986,24 +1986,39 @@ h1, h2, h3, h4 {
         flex-direction: column-reverse;
         height: 100%;
         overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
     
     .checkout-form-container {
         flex: none;
+        overflow-y: visible;
         padding: 2.5rem 1.5rem 4rem 1.5rem; /* Additional bottom padding for scroll space */
     }
     
     .checkout-summary-container {
         flex: none;
+        overflow-y: visible;
         border-left: none;
         border-bottom: 1px solid var(--mid-grey);
         padding: 2rem 1.5rem;
+    }
+
+    /* Prevent text overlap with absolute close button */
+    .summary-title, .checkout-title {
+        padding-right: 3.5rem;
     }
 
     /* Prevent summary items from taking too much height on mobile */
     .checkout-summary-items {
         max-height: 150px;
         overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Prevent iOS auto-zoom on input focus */
+    .form-group input, 
+    .form-group select {
+        font-size: 16px !important;
     }
 
     /* Stack form split fields on mobile */
@@ -2018,6 +2033,7 @@ h1, h2, h3, h4 {
 
     /* Safe positioning for close button to prevent overlaying content */
     .close-checkout {
+        position: fixed; /* Keep it fixed at the viewport top-right while scrolling */
         top: 1rem;
         right: 1rem;
         font-size: 1.8rem;
@@ -2037,6 +2053,7 @@ h1, h2, h3, h4 {
         padding: 2.5rem 1.5rem;
         justify-content: flex-start;
         overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
     .success-icon {
