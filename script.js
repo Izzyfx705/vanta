@@ -145,10 +145,11 @@ document.addEventListener('DOMContentLoaded', () => {
         cartOverlay.classList.toggle('active');
     }
 
-    function showToast(msg) {
+    function showToast(msg, type = '') {
         const c = document.getElementById('toastContainer');
+        if (!c) return;
         const t = document.createElement('div');
-        t.className = 'toast';
+        t.className = `toast ${type}`.trim();
         t.textContent = msg;
         c.appendChild(t);
         setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
@@ -486,67 +487,144 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 const paystackKey = (typeof PAYMENT_CONFIG !== 'undefined' && PAYMENT_CONFIG.publicKey) || 'pk_live_1edd26841ca8b73279796986a1063e2c4ef8f43b';
-                const paystackHandler = PaystackPop.setup({
-                    key: paystackKey,
-                    email: customerEmail,
-                    amount: total * 100, // Paystack expects amount in kobo (kobo = Naira * 100)
-                    currency: 'NGN',
-                    ref: `${orderId}-${Date.now()}`,
-                    callback: async (response) => {
-                        btnPlaceOrder.textContent = 'Recording Order...';
-                        try {
-                            // Deduct stock in Supabase
-                            for (const cartItem of cart) {
-                                const product = liveProducts.find(p => p.id === cartItem.id);
-                                if (product && product.stock) {
-                                    const newStock = { ...product.stock };
-                                    newStock[cartItem.size] = Math.max(0, (newStock[cartItem.size] || 0) - cartItem.quantity);
-                                    await VantaDB.updateProductStock(product.id, newStock);
-                                }
-                            }
-                            
-                            // Save Order to Supabase, embedding Paystack payment ref inside customer field securely
-                            const newOrder = {
-                                id: orderId,
-                                customer: `${customerName} [Paystack: ${response.reference}] (${customerEmail})`,
-                                items: orderItems,
-                                total: total,
-                                date: new Date().toISOString().split('T')[0],
-                                status: 'pending'
-                            };
-                            
-                            const success = await VantaDB.saveOrder(newOrder);
-                            if (success) {
-                                successOrderId.textContent = orderId;
-                                successOrderTotal.textContent = `₦${total.toLocaleString()}`;
-                                successEmail.textContent = customerEmail;
-                                
-                                checkoutSuccessView.classList.add('active');
-                                
-                                // Clear cart
-                                cart = [];
-                                saveCart();
-                                updateCartUI();
-                                showToast('Transaction successful! Order logged.');
-                            } else {
-                                showToast('Failed to save order to database. Reference: ' + response.reference, 'error');
-                            }
-                        } catch (err) {
-                            console.error('Checkout recording error:', err);
-                            showToast('Failed to complete checkout record. Reference: ' + response.reference, 'error');
-                        } finally {
-                            btnPlaceOrder.disabled = false;
-                            btnPlaceOrder.textContent = 'Pay with Paystack';
+                const amountInKobo = Math.round(total * 100);
+                const paymentRef = `${orderId}-${Date.now()}`;
+
+                const handlePaymentSuccess = async (reference) => {
+                    btnPlaceOrder.textContent = 'Verifying Payment...';
+                    try {
+                        // Call backend verification
+                        const verifyRes = await fetch('/api/verify-payment', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                reference: reference,
+                                amount: amountInKobo
+                            })
+                        });
+                        
+                        const verifyData = await verifyRes.json();
+                        
+                        if (!verifyRes.ok || !verifyData.verified) {
+                            throw new Error(verifyData.message || 'Payment verification failed on the server.');
                         }
-                    },
-                    onClose: () => {
-                        showToast('Transaction cancelled by user.', 'error');
+                        
+                        btnPlaceOrder.textContent = 'Recording Order...';
+                        
+                        // Deduct stock in Supabase
+                        for (const cartItem of cart) {
+                            const product = liveProducts.find(p => p.id === cartItem.id);
+                            if (product && product.stock) {
+                                const newStock = { ...product.stock };
+                                newStock[cartItem.size] = Math.max(0, (newStock[cartItem.size] || 0) - cartItem.quantity);
+                                await VantaDB.updateProductStock(product.id, newStock);
+                            }
+                        }
+                        
+                        // Save Order to Supabase, embedding Paystack payment ref inside customer field securely
+                        const newOrder = {
+                            id: orderId,
+                            customer: `${customerName} [Paystack: ${reference}] (${customerEmail})`,
+                            items: orderItems,
+                            total: total,
+                            date: new Date().toISOString().split('T')[0],
+                            status: 'pending'
+                        };
+                        
+                        const success = await VantaDB.saveOrder(newOrder);
+                        if (success) {
+                            successOrderId.textContent = orderId;
+                            successOrderTotal.textContent = `₦${total.toLocaleString()}`;
+                            successEmail.textContent = customerEmail;
+                            
+                            checkoutSuccessView.classList.add('active');
+                            
+                            // Clear cart
+                            cart = [];
+                            saveCart();
+                            updateCartUI();
+                            showToast('Transaction successful! Order logged.');
+                        } else {
+                            showToast('Failed to save order to database. Reference: ' + reference, 'error');
+                        }
+                    } catch (err) {
+                        console.error('Checkout verification/recording error:', err);
+                        showToast('Checkout verification failed: ' + err.message, 'error');
+                    } finally {
                         btnPlaceOrder.disabled = false;
                         btnPlaceOrder.textContent = 'Pay with Paystack';
                     }
-                });
+                };
 
-                paystackHandler.openIframe();
+                const handlePaymentCancel = () => {
+                    showToast('Transaction cancelled by user.', 'error');
+                    btnPlaceOrder.disabled = false;
+                    btnPlaceOrder.textContent = 'Pay with Paystack';
+                };
+
+                const handlePaymentError = (error) => {
+                    console.error('Paystack SDK error:', error);
+                    showToast('Payment processing error: ' + (error.message || 'Unknown error'), 'error');
+                    btnPlaceOrder.disabled = false;
+                    btnPlaceOrder.textContent = 'Pay with Paystack';
+                };
+
+                try {
+                    // Try V2 Class Interface first (official method for js.paystack.co/v2/inline.js)
+                    if (typeof PaystackPop === 'function' || (typeof PaystackPop === 'object' && PaystackPop.newTransaction)) {
+                        try {
+                            const paystack = new PaystackPop();
+                            if (typeof paystack.newTransaction === 'function') {
+                                paystack.newTransaction({
+                                    key: paystackKey,
+                                    email: customerEmail,
+                                    amount: amountInKobo,
+                                    currency: 'NGN',
+                                    ref: paymentRef,
+                                    onSuccess: async (transaction) => {
+                                        const ref = transaction.reference || transaction.trxref || paymentRef;
+                                        await handlePaymentSuccess(ref);
+                                    },
+                                    onCancel: () => {
+                                        handlePaymentCancel();
+                                    },
+                                    onError: (error) => {
+                                        handlePaymentError(error);
+                                    }
+                                });
+                                return;
+                            }
+                        } catch (v2Err) {
+                            console.warn('Paystack V2 instantiation failed, falling back to V1:', v2Err);
+                        }
+                    }
+
+                    // Fallback to V1 Legacy setup interface
+                    if (typeof PaystackPop.setup === 'function') {
+                        const handler = PaystackPop.setup({
+                            key: paystackKey,
+                            email: customerEmail,
+                            amount: amountInKobo,
+                            currency: 'NGN',
+                            ref: paymentRef,
+                            callback: async (response) => {
+                                const ref = response.reference || response.trxref || paymentRef;
+                                await handlePaymentSuccess(ref);
+                            },
+                            onClose: () => {
+                                handlePaymentCancel();
+                            }
+                        });
+                        handler.openIframe();
+                    } else {
+                        throw new Error('Unsupported Paystack SDK version or missing setup/newTransaction method.');
+                    }
+                } catch (initErr) {
+                    console.error('Paystack SDK initialization error:', initErr);
+                    throw initErr;
+                }
 
             } catch (err) {
                 console.error('Checkout initializing error:', err);
