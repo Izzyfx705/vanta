@@ -491,39 +491,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const paymentRef = `${orderId}-${Date.now()}`;
 
                 const handlePaymentSuccess = async (reference) => {
-                    btnPlaceOrder.textContent = 'Verifying Payment...';
+                    btnPlaceOrder.textContent = 'Verifying & Recording Order...';
                     try {
-                        // Call backend verification
-                        const verifyRes = await fetch('/api/verify-payment', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                reference: reference,
-                                amount: amountInKobo
-                            })
-                        });
-                        
-                        const verifyData = await verifyRes.json();
-                        
-                        if (!verifyRes.ok || !verifyData.verified) {
-                            throw new Error(verifyData.message || 'Payment verification failed on the server.');
-                        }
-                        
-                        btnPlaceOrder.textContent = 'Recording Order...';
-                        
-                        // Deduct stock in Supabase
-                        for (const cartItem of cart) {
-                            const product = liveProducts.find(p => p.id === cartItem.id);
-                            if (product && product.stock) {
-                                const newStock = { ...product.stock };
-                                newStock[cartItem.size] = Math.max(0, (newStock[cartItem.size] || 0) - cartItem.quantity);
-                                await VantaDB.updateProductStock(product.id, newStock);
-                            }
-                        }
-                        
-                        // Save Order to Supabase, embedding Paystack payment ref inside customer field securely
+                        // Build full order object to send to server
                         const newOrder = {
                             id: orderId,
                             customer: `${customerName} [Paystack: ${reference}] (${customerEmail})`,
@@ -532,26 +502,54 @@ document.addEventListener('DOMContentLoaded', () => {
                             date: new Date().toISOString().split('T')[0],
                             status: 'pending'
                         };
-                        
-                        const success = await VantaDB.saveOrder(newOrder);
-                        if (success) {
-                            successOrderId.textContent = orderId;
-                            successOrderTotal.textContent = `₦${total.toLocaleString()}`;
-                            successEmail.textContent = customerEmail;
-                            
-                            checkoutSuccessView.classList.add('active');
-                            
-                            // Clear cart
-                            cart = [];
-                            saveCart();
-                            updateCartUI();
-                            showToast('Transaction successful! Order logged.');
+
+                        // Call backend — verifies payment AND saves order using service role key (bypasses RLS)
+                        const verifyRes = await fetch('/api/verify-payment', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                reference: reference,
+                                amount: amountInKobo,
+                                order: newOrder
+                            })
+                        });
+
+                        const verifyData = await verifyRes.json();
+
+                        if (!verifyRes.ok || !verifyData.verified) {
+                            throw new Error(verifyData.message || 'Payment verification failed on the server.');
+                        }
+
+                        // Deduct stock client-side (uses anon key — products table should allow anon PATCH)
+                        for (const cartItem of cart) {
+                            const product = liveProducts.find(p => p.id === cartItem.id);
+                            if (product && product.stock) {
+                                const newStock = { ...product.stock };
+                                newStock[cartItem.size] = Math.max(0, (newStock[cartItem.size] || 0) - cartItem.quantity);
+                                await VantaDB.updateProductStock(product.id, newStock);
+                            }
+                        }
+
+                        // Show success screen
+                        successOrderId.textContent = orderId;
+                        successOrderTotal.textContent = `₦${total.toLocaleString()}`;
+                        successEmail.textContent = customerEmail;
+                        checkoutSuccessView.classList.add('active');
+
+                        // Clear cart
+                        cart = [];
+                        saveCart();
+                        updateCartUI();
+
+                        if (!verifyData.orderSaved) {
+                            // Payment verified but order save failed — still show success but warn
+                            showToast(`Payment received! Note: ${verifyData.message}`, 'error');
                         } else {
-                            showToast('Failed to save order to database. Reference: ' + reference, 'error');
+                            showToast('Payment verified! Order logged successfully.');
                         }
                     } catch (err) {
                         console.error('Checkout verification/recording error:', err);
-                        showToast('Checkout verification failed: ' + err.message, 'error');
+                        showToast('Checkout error: ' + err.message, 'error');
                     } finally {
                         btnPlaceOrder.disabled = false;
                         btnPlaceOrder.textContent = 'Pay with Paystack';
