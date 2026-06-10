@@ -17,7 +17,16 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { reference, amount, order } = req.body;
+  let body = req.body;
+  if (typeof body === 'string') {
+    try {
+      body = JSON.parse(body);
+    } catch (e) {
+      console.error('Failed to parse request body string as JSON:', e);
+    }
+  }
+
+  const { reference, amount, order } = body || {};
 
   if (!reference) {
     return res.status(400).json({ verified: false, message: 'Missing transaction reference.' });
@@ -59,6 +68,13 @@ export default async function handler(req, res) {
       }
 
       const txData = paystackData.data;
+
+      if (!txData) {
+        return res.status(200).json({
+          verified: false,
+          message: 'Payment verification succeeded, but transaction details are missing from Paystack response.'
+        });
+      }
 
       if (txData.status !== 'success') {
         return res.status(200).json({
