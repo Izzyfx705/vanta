@@ -84,12 +84,14 @@ export default async function handler(req, res) {
       }
 
       if (amount && Math.abs(txData.amount - amount) > 1) {
+        const expectedNaira = (amount / 100).toFixed(2);
+        const paidNaira = (txData.amount / 100).toFixed(2);
         console.warn(
           `[Verify Payment] Amount mismatch for ${reference}. Expected: ${amount}, Got: ${txData.amount}`
         );
         return res.status(200).json({
           verified: false,
-          message: 'Transaction amount mismatch — possible tampering detected.',
+          message: `Transaction amount mismatch. Expected: ₦${expectedNaira}, Paid: ₦${paidNaira}.`,
         });
       }
 
