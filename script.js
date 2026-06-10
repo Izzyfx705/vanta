@@ -468,7 +468,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
                 
-                const orders = await VantaDB.getOrders();
                 const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
                 const shipping = subtotal > 150 ? 0 : 10;
                 const total = subtotal + shipping;
@@ -476,7 +475,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const customerName = document.getElementById('checkout-name').value.trim();
                 const customerEmail = document.getElementById('checkout-email').value.trim();
-                const orderId = 'ORD-' + (1000 + orders.length + 1);
+                
+                // Generate a unique order ID using timestamp + random digits to prevent collisions and avoid RLS fetch failures
+                const orderId = 'ORD-' + Date.now().toString().slice(-5) + Math.floor(10 + Math.random() * 90);
 
                 // Initialize Paystack Inline Pop-up
                 if (typeof PaystackPop === 'undefined') {

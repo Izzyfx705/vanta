@@ -507,7 +507,7 @@ document.getElementById('addMockOrderBtn').addEventListener('click', async () =>
     newStock[size] -= qty;
     await VantaDB.updateProductStock(pick.id, newStock);
     
-    const orderId = 'ORD-' + (1000 + cachedOrders.length + 1);
+    const orderId = 'ORD-MOCK-' + Date.now().toString().slice(-5) + Math.floor(10 + Math.random() * 90);
     const order = {
         id: orderId,
         customer: mockCustomers[Math.floor(Math.random() * mockCustomers.length)],
