@@ -487,7 +487,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                const paystackKey = (typeof PAYMENT_CONFIG !== 'undefined' && PAYMENT_CONFIG.publicKey) || 'pk_live_1edd26841ca8b73279796986a1063e2c4ef8f43b';
+                const paystackKey = (typeof PAYMENT_CONFIG !== 'undefined' && PAYMENT_CONFIG.publicKey) || 'pk_test_a7b587943d6416b8496d9cf9160b88382d7a1445';
                 const amountInKobo = Math.round(total * 100);
                 const paymentRef = `${orderId}-${Date.now()}`;
 
