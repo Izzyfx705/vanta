@@ -151,6 +151,55 @@ export default async function handler(req, res) {
         }
 
         console.log(`[Verify Payment] Order ${order.id} saved successfully.`);
+
+        // Deduct stock server-side using service role key (bypasses RLS)
+        if (order.items && order.items.length) {
+          for (const item of order.items) {
+            if (item.id) {
+              try {
+                // Fetch product's current stock
+                const getRes = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${encodeURIComponent(item.id)}&select=stock`, {
+                  method: 'GET',
+                  headers: {
+                    apikey: SUPABASE_SERVICE_KEY,
+                    Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`
+                  }
+                });
+                
+                if (getRes.ok) {
+                  const products = await getRes.json();
+                  if (products && products[0]) {
+                    const currentStock = products[0].stock || {};
+                    const newStock = { ...currentStock };
+                    // Subtract quantity from the size
+                    if (item.size) {
+                      newStock[item.size] = Math.max(0, (newStock[item.size] || 0) - (item.qty || 1));
+                      
+                      // Update product with new stock
+                      const updateRes = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${encodeURIComponent(item.id)}`, {
+                        method: 'PATCH',
+                        headers: {
+                          apikey: SUPABASE_SERVICE_KEY,
+                          Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+                          'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ stock: newStock })
+                      });
+                      
+                      if (updateRes.ok) {
+                        console.log(`[Verify Payment] Deducted stock for product ${item.id} (size: ${item.size}, qty: ${item.qty}).`);
+                      } else {
+                        console.error(`[Verify Payment] Failed to update stock for product ${item.id}:`, updateRes.status, await updateRes.text());
+                      }
+                    }
+                  }
+                }
+              } catch (stockErr) {
+                console.error(`[Verify Payment] Error deducting stock for product ${item.id}:`, stockErr);
+              }
+            }
+          }
+        }
       } catch (dbErr) {
         console.error('[Verify Payment] Database error saving order:', dbErr);
         return res.status(200).json({

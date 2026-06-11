@@ -471,7 +471,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
                 const shipping = 5000;
                 const total = subtotal + shipping;
-                const orderItems = cart.map(item => ({ name: item.name, qty: item.quantity, size: item.size }));
+                const orderItems = cart.map(item => ({ id: item.id, name: item.name, qty: item.quantity, size: item.size }));
                 
                 const customerName = document.getElementById('checkout-name').value.trim();
                 const customerEmail = document.getElementById('checkout-email').value.trim();
@@ -519,16 +519,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         if (!verifyRes.ok || !verifyData.verified) {
                             throw new Error(verifyData.message || 'Payment verification failed on the server.');
-                        }
-
-                        // Deduct stock client-side (uses anon key — products table should allow anon PATCH)
-                        for (const cartItem of cart) {
-                            const product = liveProducts.find(p => p.id === cartItem.id);
-                            if (product && product.stock) {
-                                const newStock = { ...product.stock };
-                                newStock[cartItem.size] = Math.max(0, (newStock[cartItem.size] || 0) - cartItem.quantity);
-                                await VantaDB.updateProductStock(product.id, newStock);
-                            }
                         }
 
                         // Show success screen
