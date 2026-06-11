@@ -83,16 +83,25 @@ export default async function handler(req, res) {
         });
       }
 
-      if (amount && Math.abs(txData.amount - amount) > 1) {
-        const expectedNaira = (amount / 100).toFixed(2);
-        const paidNaira = (txData.amount / 100).toFixed(2);
-        console.warn(
-          `[Verify Payment] Amount mismatch for ${reference}. Expected: ${amount}, Got: ${txData.amount}`
-        );
-        return res.status(200).json({
-          verified: false,
-          message: `Transaction amount mismatch. Expected: ₦${expectedNaira}, Paid: ₦${paidNaira}.`,
-        });
+      if (amount) {
+        const expectedBase = amount;
+        const expectedGross = getPaystackGrossAmount(amount);
+        
+        const isBaseMatch = Math.abs(txData.amount - expectedBase) <= 5;
+        const isGrossMatch = Math.abs(txData.amount - expectedGross) <= 5;
+
+        if (!isBaseMatch && !isGrossMatch) {
+          const expectedNaira = (amount / 100).toFixed(2);
+          const expectedGrossNaira = (expectedGross / 100).toFixed(2);
+          const paidNaira = (txData.amount / 100).toFixed(2);
+          console.warn(
+            `[Verify Payment] Amount mismatch for ${reference}. Expected Base: ${expectedBase} (₦${expectedNaira}) or Gross: ${expectedGross} (₦${expectedGrossNaira}), Got: ${txData.amount} (₦${paidNaira})`
+          );
+          return res.status(200).json({
+            verified: false,
+            message: `Transaction amount mismatch. Expected: ₦${expectedNaira} (or ₦${expectedGrossNaira} with fees), Paid: ₦${paidNaira}.`,
+          });
+        }
       }
 
       verified = true;
@@ -158,4 +167,24 @@ export default async function handler(req, res) {
     orderSaved: !!order,
     message: 'Payment verified and order recorded successfully.',
   });
+}
+
+// Helper to calculate Paystack gross amount when "Pass fees to customer" is enabled.
+// For NGN local transactions:
+// - 1.5% fee if under 2,500 NGN (waived 100 NGN flat fee)
+// - 1.5% + 100 NGN flat fee if 2,500 NGN or above
+// - Capped at 2,000 NGN total fee
+function getPaystackGrossAmount(netAmountInKobo) {
+  const netAmount = netAmountInKobo / 100;
+  let grossAmount;
+  
+  if (netAmount < 2462.5) {
+    grossAmount = netAmount / 0.985;
+  } else if (netAmount < 124666.67) {
+    grossAmount = (netAmount + 100) / 0.985;
+  } else {
+    grossAmount = netAmount + 2000;
+  }
+  
+  return Math.round(grossAmount * 100);
 }
