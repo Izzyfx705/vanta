@@ -353,7 +353,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Populate Step 2 review details
             const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            const shipping = subtotal > 150 ? 0 : 10;
+            const shipping = 5000;
             const total = subtotal + shipping;
 
             const summaryCustomer = document.getElementById('payment-summary-customer');
@@ -400,11 +400,11 @@ document.addEventListener('DOMContentLoaded', () => {
         `).join('');
         
         const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        const shipping = subtotal > 150 ? 0 : 10;
+        const shipping = 5000;
         const total = subtotal + shipping;
         
         checkoutSubtotal.textContent = `₦${subtotal.toLocaleString()}`;
-        checkoutShipping.textContent = shipping === 0 ? 'FREE' : `₦${shipping.toFixed(2)}`;
+        checkoutShipping.textContent = `₦${shipping.toLocaleString()}`;
         checkoutTotal.textContent = `₦${total.toLocaleString()}`;
     }
 
@@ -469,7 +469,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-                const shipping = subtotal > 150 ? 0 : 10;
+                const shipping = 5000;
                 const total = subtotal + shipping;
                 const orderItems = cart.map(item => ({ name: item.name, qty: item.quantity, size: item.size }));
                 
