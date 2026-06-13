@@ -134,7 +134,7 @@ export default async function handler(req, res) {
             apikey: SUPABASE_SERVICE_KEY,
             Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
             'Content-Type': 'application/json',
-            Prefer: 'resolution=merge-duplicates,return=representation',
+            Prefer: 'resolution=merge-duplicates,return=minimal',
           },
           body: JSON.stringify(order),
         });
@@ -181,7 +181,8 @@ export default async function handler(req, res) {
                         headers: {
                           apikey: SUPABASE_SERVICE_KEY,
                           Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
-                          'Content-Type': 'application/json'
+                          'Content-Type': 'application/json',
+                          Prefer: 'return=minimal'
                         },
                         body: JSON.stringify({ stock: newStock })
                       });

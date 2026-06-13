@@ -55,6 +55,58 @@ const VantaDB = {
         }
     },
 
+    async getStoreProducts() {
+        try {
+            const res = await fetch(SUPABASE_URL + '/rest/v1/products?select=id,name,price,category,image,stock,status', {
+                headers: supabaseHeaders
+            });
+            if (!res.ok) throw new Error('Failed to fetch storefront products: ' + res.status);
+            return await res.json();
+        } catch (e) {
+            console.error('[VantaDB] Error fetching storefront products:', e);
+            return [];
+        }
+    },
+
+    async getStoreProductsCached() {
+        const CACHE_KEY = 'vanta_products_cache';
+        const CACHE_TIME_KEY = 'vanta_products_cache_time';
+        const TTL = 5 * 60 * 1000; // 5 minutes
+
+        const cachedData = localStorage.getItem(CACHE_KEY);
+        const cachedTime = localStorage.getItem(CACHE_TIME_KEY);
+        const now = Date.now();
+
+        if (cachedData && cachedTime && (now - parseInt(cachedTime) < TTL)) {
+            try {
+                return JSON.parse(cachedData);
+            } catch (e) {
+                console.warn('[VantaDB] Failed to parse cached products, refetching...');
+            }
+        }
+
+        const products = await VantaDB.getStoreProducts();
+        if (products && products.length > 0) {
+            localStorage.setItem(CACHE_KEY, JSON.stringify(products));
+            localStorage.setItem(CACHE_TIME_KEY, now.toString());
+        }
+        return products;
+    },
+
+    async getProductDetails(id) {
+        try {
+            const res = await fetch(SUPABASE_URL + '/rest/v1/products?id=eq.' + id + '&select=*', {
+                headers: supabaseHeaders
+            });
+            if (!res.ok) throw new Error('Failed to fetch product details: ' + res.status);
+            const data = await res.json();
+            return data[0] || null;
+        } catch (e) {
+            console.error('[VantaDB] Error fetching product details:', e);
+            return null;
+        }
+    },
+
     async saveProduct(product) {
         try {
             // Upsert — insert or update if ID already exists
@@ -62,7 +114,7 @@ const VantaDB = {
                 method: 'POST',
                 headers: {
                     ...supabaseHeaders,
-                    'Prefer': 'resolution=merge-duplicates,return=representation',
+                    'Prefer': 'resolution=merge-duplicates,return=minimal',
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(product)
@@ -83,7 +135,10 @@ const VantaDB = {
         try {
             const res = await fetch(SUPABASE_URL + '/rest/v1/products?id=eq.' + id, {
                 method: 'DELETE',
-                headers: supabaseHeaders
+                headers: {
+                    ...supabaseHeaders,
+                    'Prefer': 'return=minimal'
+                }
             });
             if (!res.ok) throw new Error('Failed to delete product: ' + res.status);
             return true;
@@ -129,7 +184,10 @@ const VantaDB = {
         try {
             const res = await fetch(SUPABASE_URL + '/rest/v1/orders?id=eq.' + id, {
                 method: 'PATCH',
-                headers: supabaseHeaders,
+                headers: {
+                    ...supabaseHeaders,
+                    'Prefer': 'return=minimal'
+                },
                 body: JSON.stringify({ status })
             });
             if (!res.ok) throw new Error('Failed to update order: ' + res.status);
@@ -145,7 +203,10 @@ const VantaDB = {
         try {
             const res = await fetch(SUPABASE_URL + '/rest/v1/products?id=eq.' + productId, {
                 method: 'PATCH',
-                headers: supabaseHeaders,
+                headers: {
+                    ...supabaseHeaders,
+                    'Prefer': 'return=minimal'
+                },
                 body: JSON.stringify({ stock: stockUpdate })
             });
             if (!res.ok) throw new Error('Failed to update stock: ' + res.status);
@@ -161,9 +222,14 @@ const VantaDB = {
     onProductsChange(callback) {
         let running = true;
         const poll = async () => {
+            if (!running) return;
+            if (document.hidden) {
+                setTimeout(poll, 5000); // Check again in 5s if invisible
+                return;
+            }
             const products = await VantaDB.getProducts();
             callback(products);
-            if (running) setTimeout(poll, 5000); // Poll every 5 seconds
+            setTimeout(poll, 30000); // Poll every 30 seconds
         };
         poll(); // Initial fetch
         return () => { running = false; }; // Cleanup function
@@ -172,9 +238,14 @@ const VantaDB = {
     onOrdersChange(callback) {
         let running = true;
         const poll = async () => {
+            if (!running) return;
+            if (document.hidden) {
+                setTimeout(poll, 5000); // Check again in 5s if invisible
+                return;
+            }
             const orders = await VantaDB.getOrders();
             callback(orders);
-            if (running) setTimeout(poll, 5000);
+            setTimeout(poll, 30000); // Poll every 30 seconds
         };
         poll();
         return () => { running = false; };

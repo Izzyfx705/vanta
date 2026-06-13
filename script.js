@@ -114,8 +114,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }).join('');
     }
 
-    // Set up real-time listener so storefront updates live when admin adds/edits products
-    VantaDB.onProductsChange((products) => {
+    // Fetch products once on load (with 5-min client cache to minimize database egress)
+    VantaDB.getStoreProductsCached().then(products => {
         liveProducts = products;
         renderStoreProducts();
     });
@@ -669,12 +669,42 @@ document.addEventListener('DOMContentLoaded', () => {
         modalCategory.textContent = product.category || 'Apparel';
         modalTitle.textContent = product.name;
         modalPrice.textContent = '₦' + product.price.toLocaleString();
-        modalDesc.textContent = product.description || 'No description available.';
+        
+        // Show loading placeholder if description is missing (which is true for catalog listing)
+        if (!product.description) {
+            modalDesc.innerHTML = '<span class="loading-placeholder" style="color:var(--text-muted); font-style:italic;">Loading details...</span>';
+            modalThumbnails.innerHTML = '';
+        } else {
+            modalDesc.textContent = product.description || 'No description available.';
+        }
 
         renderGallery();
         renderSizes();
         
         productModalOverlay.classList.add('active');
+
+        // Lazy load the full product details (including all images & description) from database
+        VantaDB.getProductDetails(product.id).then(fullProduct => {
+            // Ensure the user is still viewing the same product
+            if (fullProduct && currentProduct && currentProduct.id === fullProduct.id) {
+                // Update description
+                modalDesc.textContent = fullProduct.description || 'No description available.';
+                
+                // Update images and re-render gallery if multi-images exist
+                if (fullProduct.images && fullProduct.images.length > 0) {
+                    currentImages = [...fullProduct.images];
+                } else {
+                    currentImages = [fullProduct.image || 'images/product-hoodie.png'];
+                }
+                
+                // Keep the active image index in bounds just in case
+                if (activeImageIdx >= currentImages.length) {
+                    activeImageIdx = 0;
+                }
+                
+                renderGallery();
+            }
+        });
     }
 
     function closeProductModal() {
