@@ -475,6 +475,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const customerName = document.getElementById('checkout-name').value.trim();
                 const customerEmail = document.getElementById('checkout-email').value.trim();
+                const customerPhone = document.getElementById('checkout-phone').value.trim();
+                const customerAddress = document.getElementById('checkout-address').value.trim();
+                const customerCity = document.getElementById('checkout-city').value.trim();
+                const customerZip = document.getElementById('checkout-zip').value.trim();
+                const customerCountry = document.getElementById('checkout-country').value;
                 
                 // Generate a unique order ID using timestamp + random digits to prevent collisions and avoid RLS fetch failures
                 const orderId = 'ORD-' + Date.now().toString().slice(-5) + Math.floor(10 + Math.random() * 90);
@@ -497,7 +502,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Build full order object to send to server
                         const newOrder = {
                             id: orderId,
-                            customer: `${customerName} [Paystack: ${reference}] (${customerEmail})`,
+                            customer: `${customerName} [Phone: ${customerPhone}] [Shipping: ${customerAddress}, ${customerCity}, ${customerZip}, ${customerCountry}] [Paystack: ${reference}] (${customerEmail})`,
                             items: orderItems,
                             total: total,
                             date: new Date().toISOString().split('T')[0],
