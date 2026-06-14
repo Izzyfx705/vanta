@@ -1,6 +1,31 @@
 // ===== VANTA DATA LAYER (Supabase REST API) =====
 // Shared data access module — uses plain fetch(), no SDK needed
 
+function isTokenExpired(token) {
+    if (!token) return true;
+    try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        const payload = JSON.parse(jsonPayload);
+        if (payload.exp) {
+            const now = Math.floor(Date.now() / 1000);
+            return now >= payload.exp;
+        }
+        return false;
+    } catch (e) {
+        console.error('[VantaAuth] Error decoding token:', e);
+        return true;
+    }
+}
+
+function invalidateStorefrontCache() {
+    localStorage.removeItem('vanta_products_cache');
+    localStorage.removeItem('vanta_products_cache_time');
+}
+
 const VantaAuth = {
     async login(email, password) {
         try {
@@ -33,6 +58,12 @@ const VantaAuth = {
     checkSession() {
         const token = localStorage.getItem('vanta_admin_token');
         if (token) {
+            if (isTokenExpired(token)) {
+                console.warn('[VantaAuth] Session expired, logging out...');
+                localStorage.removeItem('vanta_admin_token');
+                supabaseHeaders['Authorization'] = 'Bearer ' + SUPABASE_KEY;
+                return false;
+            }
             supabaseHeaders['Authorization'] = 'Bearer ' + token;
             return true;
         }
@@ -122,8 +153,12 @@ const VantaDB = {
             if (!res.ok) {
                 const errText = await res.text();
                 console.error('[VantaDB] Save product failed:', res.status, errText);
+                if (res.status === 401 || res.status === 403) {
+                    VantaAuth.logout();
+                }
                 throw new Error('Failed to save product: ' + res.status);
             }
+            invalidateStorefrontCache();
             return true;
         } catch (e) {
             console.error('[VantaDB] Error saving product:', e);
@@ -137,7 +172,18 @@ const VantaDB = {
                 method: 'DELETE',
                 headers: supabaseHeaders
             });
-            if (!res.ok) throw new Error('Failed to delete product: ' + res.status);
+            if (!res.ok) {
+                if (res.status === 401 || res.status === 403) {
+                    VantaAuth.logout();
+                }
+                throw new Error('Failed to delete product: ' + res.status);
+            }
+            const data = await res.json();
+            if (data.length === 0) {
+                console.warn('[VantaDB] Product delete returned 0 rows. RLS policy might have blocked it.');
+                return false;
+            }
+            invalidateStorefrontCache();
             return true;
         } catch (e) {
             console.error('[VantaDB] Error deleting product:', e);
@@ -169,7 +215,12 @@ const VantaDB = {
                 },
                 body: JSON.stringify(order)
             });
-            if (!res.ok) throw new Error('Failed to save order: ' + res.status);
+            if (!res.ok) {
+                if (res.status === 401 || res.status === 403) {
+                    VantaAuth.logout();
+                }
+                throw new Error('Failed to save order: ' + res.status);
+            }
             return true;
         } catch (e) {
             console.error('[VantaDB] Error saving order:', e);
@@ -184,7 +235,17 @@ const VantaDB = {
                 headers: supabaseHeaders,
                 body: JSON.stringify({ status })
             });
-            if (!res.ok) throw new Error('Failed to update order: ' + res.status);
+            if (!res.ok) {
+                if (res.status === 401 || res.status === 403) {
+                    VantaAuth.logout();
+                }
+                throw new Error('Failed to update order: ' + res.status);
+            }
+            const data = await res.json();
+            if (data.length === 0) {
+                console.warn('[VantaDB] Order status update returned 0 rows. RLS policy might have blocked it.');
+                return false;
+            }
             return true;
         } catch (e) {
             console.error('[VantaDB] Error updating order status:', e);
@@ -200,7 +261,18 @@ const VantaDB = {
                 headers: supabaseHeaders,
                 body: JSON.stringify({ stock: stockUpdate })
             });
-            if (!res.ok) throw new Error('Failed to update stock: ' + res.status);
+            if (!res.ok) {
+                if (res.status === 401 || res.status === 403) {
+                    VantaAuth.logout();
+                }
+                throw new Error('Failed to update stock: ' + res.status);
+            }
+            const data = await res.json();
+            if (data.length === 0) {
+                console.warn('[VantaDB] Stock update returned 0 rows. RLS policy might have blocked it.');
+                return false;
+            }
+            invalidateStorefrontCache();
             return true;
         } catch (e) {
             console.error('[VantaDB] Error updating stock:', e);

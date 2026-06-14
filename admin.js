@@ -18,6 +18,19 @@ function showToast(msg, type = 'success') {
     setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
 }
 
+function refreshProductsUI() {
+    const activeView = document.querySelector('.nav-item.active')?.dataset?.view;
+    if (activeView === 'dashboard') renderDashboard();
+    if (activeView === 'products') renderProducts();
+    if (activeView === 'inventory') renderInventory();
+}
+
+function refreshOrdersUI() {
+    const activeView = document.querySelector('.nav-item.active')?.dataset?.view;
+    if (activeView === 'dashboard') renderDashboard();
+    if (activeView === 'orders') renderOrders();
+}
+
 // ---- Navigation ----
 const navItems = document.querySelectorAll('.nav-item[data-view]');
 const views = document.querySelectorAll('.view');
@@ -346,6 +359,15 @@ form.addEventListener('submit', async (e) => {
     
     if (success) {
         showToast(isEdit ? 'Product updated successfully' : 'Product added successfully');
+        if (isEdit) {
+            const idx = cachedProducts.findIndex(p => p.id === data.id);
+            if (idx !== -1) {
+                cachedProducts[idx] = data;
+            }
+        } else {
+            cachedProducts.push(data);
+        }
+        refreshProductsUI();
         closeModal();
     } else {
         showToast('Error saving product. Try again.', 'error');
@@ -364,6 +386,8 @@ window.deleteProduct = async function(id) {
     const success = await VantaDB.deleteProduct(id);
     if (success) {
         showToast('Product deleted', 'success');
+        cachedProducts = cachedProducts.filter(p => p.id !== id);
+        refreshProductsUI();
     } else {
         showToast('Error deleting product', 'error');
     }
@@ -422,6 +446,8 @@ window.restockProduct = async function(id) {
     const success = await VantaDB.updateProductStock(id, newStock);
     if (success) {
         showToast(`Restocked ${p.name} (+20 each size)`, 'info');
+        p.stock = newStock;
+        refreshProductsUI();
     } else {
         showToast('Error restocking product', 'error');
     }
@@ -482,8 +508,14 @@ window.updateOrderStatus = async function(id, status) {
     const success = await VantaDB.updateOrderStatus(id, status);
     if (success) {
         showToast(`Order ${id} marked as ${status}`);
+        const order = cachedOrders.find(o => o.id === id);
+        if (order) {
+            order.status = status;
+        }
+        refreshOrdersUI();
     } else {
         showToast('Error updating order', 'error');
+        refreshOrdersUI();
     }
 };
 
@@ -520,6 +552,10 @@ document.getElementById('addMockOrderBtn').addEventListener('click', async () =>
     const success = await VantaDB.saveOrder(order);
     if (success) {
         showToast(`New order ${order.id} created!`);
+        pick.stock = newStock;
+        cachedOrders.unshift(order);
+        refreshProductsUI();
+        refreshOrdersUI();
     } else {
         showToast('Error creating order', 'error');
     }
