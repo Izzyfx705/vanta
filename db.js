@@ -114,7 +114,7 @@ const VantaDB = {
                 method: 'POST',
                 headers: {
                     ...supabaseHeaders,
-                    'Prefer': 'resolution=merge-duplicates,return=minimal',
+                    'Prefer': 'resolution=merge-duplicates,return=representation',
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(product)
@@ -135,10 +135,7 @@ const VantaDB = {
         try {
             const res = await fetch(SUPABASE_URL + '/rest/v1/products?id=eq.' + id, {
                 method: 'DELETE',
-                headers: {
-                    ...supabaseHeaders,
-                    'Prefer': 'return=minimal'
-                }
+                headers: supabaseHeaders
             });
             if (!res.ok) throw new Error('Failed to delete product: ' + res.status);
             return true;
@@ -184,10 +181,7 @@ const VantaDB = {
         try {
             const res = await fetch(SUPABASE_URL + '/rest/v1/orders?id=eq.' + id, {
                 method: 'PATCH',
-                headers: {
-                    ...supabaseHeaders,
-                    'Prefer': 'return=minimal'
-                },
+                headers: supabaseHeaders,
                 body: JSON.stringify({ status })
             });
             if (!res.ok) throw new Error('Failed to update order: ' + res.status);
@@ -203,10 +197,7 @@ const VantaDB = {
         try {
             const res = await fetch(SUPABASE_URL + '/rest/v1/products?id=eq.' + productId, {
                 method: 'PATCH',
-                headers: {
-                    ...supabaseHeaders,
-                    'Prefer': 'return=minimal'
-                },
+                headers: supabaseHeaders,
                 body: JSON.stringify({ stock: stockUpdate })
             });
             if (!res.ok) throw new Error('Failed to update stock: ' + res.status);
