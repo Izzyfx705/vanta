@@ -163,17 +163,17 @@ function renderProducts() {
         const stockClass = ts === 0 ? 'stock-critical' : ts <= 10 ? 'stock-low' : 'stock-ok';
         return `
         <tr>
-            <td>
+            <td data-label="Product">
                 <div class="product-cell">
                     <div class="product-thumb">${p.image ? `<img src="${p.image}" alt="${p.name}" style="width:100%; height:100%; object-fit:cover; border-radius:4px;">` : p.name.charAt(0)}</div>
                     <span>${p.name}</span>
                 </div>
             </td>
-            <td style="text-transform:capitalize">${p.category}</td>
-            <td>${formatMoney(p.price)}</td>
-            <td class="${stockClass}">${ts}</td>
-            <td><span class="status-badge status-${p.status}">${p.status}</span></td>
-            <td>
+            <td data-label="Category" style="text-transform:capitalize">${p.category}</td>
+            <td data-label="Price">${formatMoney(p.price)}</td>
+            <td data-label="Stock" class="${stockClass}">${ts}</td>
+            <td data-label="Status"><span class="status-badge status-${p.status}">${p.status}</span></td>
+            <td data-label="Actions">
                 <div class="action-btns">
                     <button class="btn btn-sm btn-secondary" onclick="editProduct('${p.id}')">Edit</button>
                     <button class="btn btn-sm btn-danger" onclick="deleteProduct('${p.id}')">Delete</button>
@@ -432,15 +432,15 @@ function renderInventory() {
         const statusText = ts === 0 ? 'Out of stock' : ts <= 10 ? 'Low stock' : 'In stock';
         return `
         <tr>
-            <td><div class="product-cell"><div class="product-thumb">${p.image ? `<img src="${p.image}" alt="${p.name}" style="width:100%; height:100%; object-fit:cover; border-radius:4px;">` : p.name.charAt(0)}</div><span>${p.name}</span></div></td>
-            <td style="color:var(--text-muted)">${p.sku}</td>
-            <td>${p.stock.S}</td>
-            <td>${p.stock.M}</td>
-            <td>${p.stock.L}</td>
-            <td>${p.stock.XL}</td>
-            <td class="${statusClass}" style="font-weight:600">${ts}</td>
-            <td><span class="status-badge ${ts === 0 ? 'status-archived' : ts <= 10 ? 'status-pending' : 'status-active'}">${statusText}</span></td>
-            <td><button class="btn btn-sm btn-secondary" onclick="restockProduct('${p.id}')">Restock</button></td>
+            <td data-label="Product"><div class="product-cell"><div class="product-thumb">${p.image ? `<img src="${p.image}" alt="${p.name}" style="width:100%; height:100%; object-fit:cover; border-radius:4px;">` : p.name.charAt(0)}</div><span>${p.name}</span></div></td>
+            <td data-label="SKU" style="color:var(--text-muted)">${p.sku}</td>
+            <td data-label="S"><span class="size-chip">${p.stock.S}</span></td>
+            <td data-label="M"><span class="size-chip">${p.stock.M}</span></td>
+            <td data-label="L"><span class="size-chip">${p.stock.L}</span></td>
+            <td data-label="XL"><span class="size-chip">${p.stock.XL}</span></td>
+            <td data-label="Total" class="${statusClass}" style="font-weight:700">${ts}</td>
+            <td data-label="Stock Status"><span class="status-badge ${ts === 0 ? 'status-archived' : ts <= 10 ? 'status-pending' : 'status-active'}">${statusText}</span></td>
+            <td data-label="Action"><button class="btn btn-sm btn-secondary" onclick="restockProduct('${p.id}')">+20 Restock</button></td>
         </tr>`;
     }).join('');
 }
@@ -499,14 +499,14 @@ function renderOrders() {
     }
     tbody.innerHTML = filtered.map(o => `
         <tr>
-            <td style="font-weight:600">${o.id}</td>
-            <td>${o.customer}</td>
-            <td>${o.items.map(i => `${i.qty}x ${i.name} (${i.size})`).join(', ')}</td>
-            <td style="font-weight:600">${formatMoney(o.total)}</td>
-            <td style="color:var(--text-muted)">${o.date}</td>
-            <td><span class="status-badge status-${o.status}">${o.status}</span></td>
-            <td>
-                <select class="btn btn-sm btn-secondary" onchange="updateOrderStatus('${o.id}', this.value)" style="cursor:pointer">
+            <td data-label="Order ID"><span style="font-weight:700; font-size:0.9rem">${o.id}</span></td>
+            <td data-label="Customer">${o.customer}</td>
+            <td data-label="Items" class="order-items-cell">${o.items.map(i => `<span class="order-item-tag">${i.qty}x ${i.name} <span style="opacity:0.6">(${i.size})</span></span>`).join('')}</td>
+            <td data-label="Total"><span style="font-weight:700">${formatMoney(o.total)}</span></td>
+            <td data-label="Date" style="color:var(--text-muted)">${o.date}</td>
+            <td data-label="Status"><span class="status-badge status-${o.status}">${o.status}</span></td>
+            <td data-label="Update Status">
+                <select class="status-select" onchange="updateOrderStatus('${o.id}', this.value)">
                     <option value="pending" ${o.status === 'pending' ? 'selected' : ''}>Pending</option>
                     <option value="shipped" ${o.status === 'shipped' ? 'selected' : ''}>Shipped</option>
                     <option value="delivered" ${o.status === 'delivered' ? 'selected' : ''}>Delivered</option>

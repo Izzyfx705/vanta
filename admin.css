@@ -928,13 +928,67 @@ body {
 .ls-name { font-size: 0.9rem; font-weight: 600; }
 .ls-count { font-size: 0.9rem; color: var(--orange); font-weight: 700; }
 
+/* ===== ORDER ITEM TAGS & SIZE CHIPS ===== */
+.order-items-cell {
+    max-width: 260px;
+    white-space: normal;
+    line-height: 1.6;
+}
+
+.order-item-tag {
+    display: inline-block;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: 0.82rem;
+    margin: 2px 2px 2px 0;
+    white-space: nowrap;
+}
+
+.size-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 28px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0 6px;
+}
+
+/* ===== STATUS SELECT DROPDOWN ===== */
+.status-select {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    font-family: var(--font);
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0.45rem 0.85rem;
+    border-radius: 8px;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.25s;
+}
+
+.status-select:hover {
+    border-color: var(--border-hover);
+}
+
+.status-select:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 10px rgba(139,92,246,0.15);
+}
+
 /* ===== RESPONSIVE / MOBILE BACKDROP ===== */
 .sidebar-backdrop {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
     background: rgba(4, 4, 6, 0.5);
     backdrop-filter: blur(4px);
     z-index: 45;
@@ -948,28 +1002,139 @@ body {
     pointer-events: all;
 }
 
+/* ===== TABLET (≤900px) ===== */
 @media (max-width: 900px) {
     .sidebar { transform: translateX(-100%); }
-    .sidebar.open { transform: translateX(0); }
+    .sidebar.open { transform: translateX(0); box-shadow: 20px 0 60px rgba(0,0,0,0.5); }
     .main-wrapper { margin-left: 0; }
     .sidebar-toggle { display: block; }
     .dashboard-grid { grid-template-columns: 1fr; }
-    .search-box { width: 180px; }
-    .topbar { padding: 0 1.25rem; }
+    .search-box { width: 200px; }
+    .topbar { padding: 0 1.25rem; gap: 0.75rem; }
 }
 
-@media (max-width: 600px) {
-    .view { padding: 1.25rem 1rem; }
-    .stats-grid { grid-template-columns: 1fr; }
+/* ===== MOBILE (≤640px) — TABLE → CARD LAYOUT ===== */
+@media (max-width: 640px) {
+    .view { padding: 1rem 0.85rem; }
+    .stats-grid { grid-template-columns: 1fr 1fr; gap: 0.85rem; }
+    .stat-card { padding: 1.25rem; gap: 1rem; }
+    .stat-value { font-size: 1.35rem; }
+    .view-header h1 { font-size: 1.5rem; }
     .form-row { grid-template-columns: 1fr; }
     .search-box { display: none; }
     .filter-group { flex-direction: column; width: 100%; }
-    .filter-group select, .table-controls select { width: 100%; }
+    .filter-group select { width: 100%; }
     .view-header { flex-direction: column; align-items: stretch; gap: 0.75rem; }
-    .view-header .btn { width: 100%; }
+    .view-header .btn { width: 100%; justify-content: center; }
     .modal-actions { flex-direction: column-reverse; gap: 0.5rem; }
-    .modal-actions .btn { width: 100%; }
+    .modal-actions .btn { width: 100%; justify-content: center; }
+    .inventory-summary { grid-template-columns: 1fr 1fr; }
+    .topbar-right { gap: 0.75rem; }
+
+    /* Hide table headers on mobile */
+    .data-table thead {
+        display: none;
+    }
+
+    /* Make each row a card */
+    .data-table,
+    .data-table tbody,
+    .data-table tr,
+    .data-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .data-table tr {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        margin-bottom: 0.85rem;
+        padding: 0.75rem 0;
+        overflow: hidden;
+    }
+
+    .data-table tr:hover {
+        background: var(--bg-card);
+        border-color: var(--border-hover);
+    }
+
+    .data-table td {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.6rem 1.1rem;
+        border-bottom: 1px solid rgba(255,255,255,0.04);
+        white-space: normal;
+        text-align: right;
+        font-size: 0.9rem;
+    }
+
+    .data-table td:last-child {
+        border-bottom: none;
+    }
+
+    /* Show label before each cell */
+    .data-table td[data-label]::before {
+        content: attr(data-label);
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-muted);
+        text-align: left;
+        flex-shrink: 0;
+        margin-right: 1rem;
+    }
+
+    /* Product cell on mobile — align left */
+    .data-table td[data-label="Product"],
+    .data-table td[data-label="Items"] {
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+    }
+
+    .data-table td[data-label="Product"]::before,
+    .data-table td[data-label="Items"]::before {
+        margin-bottom: 0.4rem;
+    }
+
+    .order-items-cell {
+        max-width: 100%;
+    }
+
+    /* Action buttons full width */
+    .action-btns {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    /* Status select full width */
+    .status-select {
+        width: 100%;
+    }
+
+    /* Empty table state */
+    .data-table tr:has(td[colspan]) {
+        border: none;
+        background: transparent;
+    }
+
+    /* Table wrap — remove horizontal scroll on mobile */
+    .table-wrap {
+        overflow-x: visible;
+    }
 }
+
+/* ===== VERY SMALL (≤380px) ===== */
+@media (max-width: 380px) {
+    .stats-grid { grid-template-columns: 1fr; }
+    .inventory-summary { grid-template-columns: 1fr 1fr; }
+    .stat-card { padding: 1rem; }
+}
+
+
 
 /* ===== LOGIN SCREEN ===== */
 .login-overlay {
