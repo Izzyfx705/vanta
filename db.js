@@ -194,7 +194,7 @@ const VantaDB = {
     // ---- ORDERS ----
     async getOrders() {
         try {
-            const res = await fetch(SUPABASE_URL + '/rest/v1/orders?select=*&order=date.desc', {
+            const res = await fetch(SUPABASE_URL + '/rest/v1/orders?select=*&order=date.desc,id.desc', {
                 headers: supabaseHeaders
             });
             if (!res.ok) throw new Error('Failed to fetch orders: ' + res.status);

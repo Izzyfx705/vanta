@@ -551,7 +551,7 @@ document.getElementById('addMockOrderBtn').addEventListener('click', async () =>
     newStock[size] -= qty;
     await VantaDB.updateProductStock(pick.id, newStock);
     
-    const orderId = 'ORD-MOCK-' + Date.now().toString().slice(-5) + Math.floor(10 + Math.random() * 90);
+    const orderId = 'ORD-' + Date.now() + '-' + Math.floor(10 + Math.random() * 90) + '-MOCK';
     const order = {
         id: orderId,
         customer: mockCustomers[Math.floor(Math.random() * mockCustomers.length)],
@@ -633,6 +633,12 @@ async function initAdmin() {
     });
 
     VantaDB.onOrdersChange((orders) => {
+        orders.sort((a, b) => {
+            if (a.date !== b.date) {
+                return b.date.localeCompare(a.date);
+            }
+            return b.id.localeCompare(a.id);
+        });
         cachedOrders = orders;
         const activeView = document.querySelector('.nav-item.active')?.dataset?.view;
         if (activeView === 'dashboard') renderDashboard();

@@ -482,7 +482,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const customerCountry = document.getElementById('checkout-country').value;
                 
                 // Generate a unique order ID using timestamp + random digits to prevent collisions and avoid RLS fetch failures
-                const orderId = 'ORD-' + Date.now().toString().slice(-5) + Math.floor(10 + Math.random() * 90);
+                const orderId = 'ORD-' + Date.now() + '-' + Math.floor(10 + Math.random() * 90);
 
                 // Initialize Paystack Inline Pop-up
                 if (typeof PaystackPop === 'undefined') {
