@@ -890,6 +890,89 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // ===== VOID RADIO MUSIC PLAYER LOGIC =====
+    const voidPlayer = document.getElementById('voidPlayer');
+    const voidAudio = document.getElementById('voidAudio');
+    const playBtn = document.getElementById('playerPlayBtn');
+    const muteBtn = document.getElementById('playerMuteBtn');
+
+    if (voidAudio && playBtn && muteBtn) {
+        const playIcon = playBtn.querySelector('.play-icon');
+        const pauseIcon = playBtn.querySelector('.pause-icon');
+        const volumeIcon = muteBtn.querySelector('.volume-icon');
+        const muteIcon = muteBtn.querySelector('.mute-icon');
+
+        // Set initial volume to a comfortable 30% or restore from localStorage
+        const savedVolume = localStorage.getItem('vanta_audio_volume');
+        voidAudio.volume = savedVolume !== null ? parseFloat(savedVolume) : 0.3;
+
+        // Sync mute button state with initial mute status
+        const savedMuted = localStorage.getItem('vanta_audio_muted') === 'true';
+        voidAudio.muted = savedMuted;
+        updateVolumeUI(savedMuted);
+
+        // Helper to update play/pause UI
+        function updatePlayUI(isPlaying) {
+            if (isPlaying) {
+                voidPlayer.classList.add('playing');
+                playIcon.style.display = 'none';
+                pauseIcon.style.display = 'block';
+            } else {
+                voidPlayer.classList.remove('playing');
+                playIcon.style.display = 'block';
+                pauseIcon.style.display = 'none';
+            }
+        }
+
+        // Helper to update mute/volume UI
+        function updateVolumeUI(isMuted) {
+            if (isMuted) {
+                volumeIcon.style.display = 'none';
+                muteIcon.style.display = 'block';
+            } else {
+                volumeIcon.style.display = 'block';
+                muteIcon.style.display = 'none';
+            }
+        }
+
+        // Play/Pause Action
+        playBtn.addEventListener('click', async () => {
+            if (voidAudio.paused) {
+                try {
+                    await voidAudio.play();
+                    updatePlayUI(true);
+                    localStorage.setItem('vanta_audio_playing', 'true');
+                } catch (err) {
+                    console.error('[Void Radio] Playback blocked or failed:', err);
+                    showToast('Audio playback blocked by browser. Please try again.', 'info');
+                }
+            } else {
+                voidAudio.pause();
+                updatePlayUI(false);
+                localStorage.setItem('vanta_audio_playing', 'false');
+            }
+        });
+
+        // Mute Action
+        muteBtn.addEventListener('click', () => {
+            voidAudio.muted = !voidAudio.muted;
+            localStorage.setItem('vanta_audio_muted', voidAudio.muted);
+            updateVolumeUI(voidAudio.muted);
+        });
+
+        // Restore play state on page load if allowed
+        const shouldPlay = localStorage.getItem('vanta_audio_playing') === 'true';
+        if (shouldPlay) {
+            // Attempt to autoplay (might fail depending on browser policy)
+            voidAudio.play().then(() => {
+                updatePlayUI(true);
+            }).catch(() => {
+                console.log('[Void Radio] Autoplay prevented by browser on load.');
+                localStorage.setItem('vanta_audio_playing', 'false');
+            });
+        }
+    }
+
     // Initial render
     updateCartUI();
 });
